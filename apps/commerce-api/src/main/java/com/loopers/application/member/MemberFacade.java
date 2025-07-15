@@ -27,4 +27,17 @@ public class MemberFacade {
 
         return MemberInfo.from(memberService.createMember(userId, gender, birthdate, email));
     }
+
+    public MemberInfo getMember(String userId) {
+        MemberModel member;
+        try {
+            member = memberService.getMember(userId);
+        } catch (CoreException e) {
+            if (e.getErrorType() == ErrorType.NOT_FOUND) {
+                return null;
+            }
+            throw e;
+        }
+        return MemberInfo.from(member);
+    }
 }
