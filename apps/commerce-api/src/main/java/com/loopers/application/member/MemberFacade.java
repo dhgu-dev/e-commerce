@@ -27,4 +27,8 @@ public class MemberFacade {
 
         return MemberInfo.from(memberService.createMember(userId, gender, birthdate, email));
     }
+
+    public MemberInfo getMember(String userId) {
+        return MemberInfo.from(memberService.getMember(userId));
+    }
 }

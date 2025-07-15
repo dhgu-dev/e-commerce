@@ -4,6 +4,7 @@ import com.loopers.application.member.MemberFacade;
 import com.loopers.application.member.MemberInfo;
 import com.loopers.interfaces.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,5 +26,11 @@ public class MemberV1Controller implements MemberV1ApiSpec {
                 dto.email()
         );
         return ApiResponse.success(MemberV1Dto.MemberResponse.from(member));
+    }
+
+    @GetMapping("/me")
+    @Override
+    public ApiResponse<MemberV1Dto.MemberResponse> getMyInfo(String userId) {
+        return ApiResponse.success(MemberV1Dto.MemberResponse.from(memberFacade.getMember(userId)));
     }
 }
