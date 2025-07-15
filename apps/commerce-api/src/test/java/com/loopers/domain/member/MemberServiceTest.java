@@ -1,0 +1,88 @@
+package com.loopers.domain.member;
+
+import com.loopers.domain.member.enums.Gender;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+
+@ExtendWith(MockitoExtension.class)
+class MemberServiceTest {
+    @Mock
+    private MemberRepository memberRepository;
+
+    @InjectMocks
+    private MemberService memberService;
+
+    @DisplayName("회원을 조회할 때")
+    @Nested
+    class GetMember {
+        @DisplayName("회원 아이디를 제공하면 회원 모델을 반환한다")
+        @Test
+        void returnsMemberModel_whenUserIdIsProvided() {
+            String userId = "testUser";
+            MemberModel memberModel = new MemberModel(userId, Gender.MALE, "1990-01-01", "test@test.com");
+
+            when(memberRepository.findByUserId(anyString())).thenReturn(Optional.of(memberModel));
+            MemberModel expectedMember = memberService.getMember(userId);
+
+            verify(memberRepository).findByUserId(userId);
+            assertThat(expectedMember.getUserId()).isEqualTo(userId);
+        }
+
+        @DisplayName("없는 회원 아이디를 제공하면 예외를 던진다")
+        @Test
+        void throwsException_whenUserNotFound() {
+            String notExistingUserId = "nonExistentUser";
+
+            when(memberRepository.findByUserId(anyString())).thenReturn(Optional.empty());
+
+            CoreException exception = assertThrows(CoreException.class, () -> memberService.getMember(notExistingUserId));
+
+            verify(memberRepository).findByUserId(notExistingUserId);
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
+        }
+    }
+
+    @DisplayName("회원을 생성할 때")
+    @Nested
+    class CreateMember {
+        @DisplayName("회원 아이디, 성별, 생일, 이메일을 제공하면 회원 모델을 생성한다")
+        @Test
+        void createMemberModel_whenAllFieldsAreProvided() {
+            String userId = "newUser";
+            Gender gender = Gender.MALE;
+            String birthdate = "1995-05-05";
+            String email = "test@test.com";
+
+            MemberModel newMember = new MemberModel(userId, gender, birthdate, email);
+            when(memberRepository.create(any(MemberModel.class))).thenReturn(newMember);
+
+            MemberModel createdMember = memberService.createMember(userId, gender, birthdate, email);
+
+            verify(memberRepository).create(any(MemberModel.class));
+            assertAll(
+                    () -> assertThat(createdMember.getUserId()).isEqualTo(userId),
+                    () -> assertThat(createdMember.getGender()).isEqualTo(gender),
+                    () -> assertThat(createdMember.getBirthdate()).isEqualTo(birthdate),
+                    () -> assertThat(createdMember.getEmail()).isEqualTo(email)
+            );
+        }
+    }
+}
