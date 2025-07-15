@@ -1,7 +1,9 @@
 package com.loopers.application.member;
 
+import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberService;
 import com.loopers.domain.member.enums.Gender;
+import com.loopers.infrastructure.member.MemberJpaRepository;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
@@ -14,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 
@@ -28,6 +31,9 @@ class MemberFacadeIntegrationTest {
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
+
+    @Autowired
+    private MemberJpaRepository memberJpaRepository;
 
     @AfterEach
     void tearDown() {
@@ -63,6 +69,27 @@ class MemberFacadeIntegrationTest {
 
             CoreException exception = assertThrows(CoreException.class, () -> memberFacade.signUp(userId, Gender.MALE, "2000-01-01", "test@test.com"));
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
+        }
+    }
+
+    @DisplayName("내 정보 조회를 할 때")
+    @Nested
+    class GetMember {
+        @DisplayName("해당 ID 의 회원이 존재할 경우, 회원 정보가 반환된다.")
+        @Test
+        void returnMember_whenExistUserId() {
+            MemberModel existedMember = memberJpaRepository.save(new MemberModel("test", Gender.FEMALE, "2000-01-01", "test@test.com"));
+
+            MemberInfo target = memberFacade.getMember(existedMember.getUserId());
+
+            assertThat(target).isEqualTo(MemberInfo.from(existedMember));
+        }
+
+        @DisplayName("해당 ID 의 회원이 존재하지 않을 경우, null 이 반환된다.")
+        @Test
+        void returnNull_whenNotExistUserId() {
+            MemberInfo target = memberFacade.getMember("nonExistentUserId");
+            assertNull(target);
         }
     }
 }
