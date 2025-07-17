@@ -27,7 +27,8 @@ public class MemberModel extends BaseEntity {
 
     private Long points;
 
-    protected MemberModel() {}
+    protected MemberModel() {
+    }
 
     public MemberModel(String userId, Gender gender, String birthdate, String email) {
         if (userId == null || userId.isBlank()) {
@@ -81,5 +82,13 @@ public class MemberModel extends BaseEntity {
 
     public Long getPoints() {
         return points;
+    }
+
+    public Long chargePoints(Long amount) {
+        if (amount == null || amount <= 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "충전 금액은 0보다 커야 합니다.");
+        }
+        this.points += amount;
+        return this.points;
     }
 }
