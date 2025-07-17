@@ -17,4 +17,12 @@ public interface PointsV1ApiSpec {
             @RequestHeader("X-USER-ID") String userId,
             @RequestBody PointsV1Dto.PointsChargeRequest dto
     );
+
+    @Operation(
+            summary = "보유 포인트 조회",
+            description = "사용자의 보유 포인트를 조회합니다."
+    )
+    ApiResponse<PointsV1Dto.PointsResponse> getMyPoints(
+            @RequestHeader(value = "X-USER-ID", required = false) String userId
+    );
 }

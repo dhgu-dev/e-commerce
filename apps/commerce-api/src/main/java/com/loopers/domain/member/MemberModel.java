@@ -31,6 +31,10 @@ public class MemberModel extends BaseEntity {
     }
 
     public MemberModel(String userId, Gender gender, String birthdate, String email) {
+        this(userId, gender, birthdate, email, 0L);
+    }
+
+    public MemberModel(String userId, Gender gender, String birthdate, String email, Long points) {
         if (userId == null || userId.isBlank()) {
             throw new CoreException(ErrorType.BAD_REQUEST, "이름은 비어있을 수 없습니다.");
         }
@@ -55,14 +59,16 @@ public class MemberModel extends BaseEntity {
         if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")) {
             throw new CoreException(ErrorType.BAD_REQUEST, "잘못된 형식의 이메일입니다.");
         }
+        if (points == null || points < 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "포인트는 0 이상이어야 합니다.");
+        }
 
         this.userId = userId;
         this.gender = gender;
         this.birthdate = parsedBirthdate;
         this.email = email;
-        this.points = 0L;
+        this.points = points;
     }
-
 
     public String getUserId() {
         return userId;
