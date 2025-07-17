@@ -1,5 +1,6 @@
 package com.loopers.application.points;
 
+import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
@@ -16,5 +17,17 @@ public class PointsFacade {
             throw new CoreException(ErrorType.BAD_REQUEST, "포인트는 0보다 커야 합니다.");
         }
         return memberService.chargePoints(userId, points).getPoints();
+    }
+
+    public Long getPoints(String userId) {
+        try {
+            MemberModel member = memberService.getMember(userId);
+            return member.getPoints();
+        } catch (CoreException e) {
+            if (e.getErrorType() == ErrorType.NOT_FOUND) {
+                return null;
+            }
+            throw e;
+        }
     }
 }
