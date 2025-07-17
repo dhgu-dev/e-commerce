@@ -5,8 +5,6 @@ import com.loopers.domain.member.enums.Gender;
 import com.loopers.infrastructure.member.MemberJpaRepository;
 import com.loopers.interfaces.api.points.PointsV1Controller;
 import com.loopers.interfaces.api.points.PointsV1Dto;
-import com.loopers.support.error.CoreException;
-import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,8 +20,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class PointsV1ApiE2ETest {
@@ -78,8 +74,6 @@ public class PointsV1ApiE2ETest {
         void returnsCreatedMember_whenSuccessfulSignUp() {
             String notExistUserId = "test";
             Long chargeAmount = 1000L;
-
-            Mockito.doThrow(new CoreException(ErrorType.NOT_FOUND)).when(pointsV1Controller).charge(eq(notExistUserId), any(PointsV1Dto.PointsChargeRequest.class));
 
             HttpHeaders headers = new HttpHeaders();
             headers.set("X-USER-ID", notExistUserId);

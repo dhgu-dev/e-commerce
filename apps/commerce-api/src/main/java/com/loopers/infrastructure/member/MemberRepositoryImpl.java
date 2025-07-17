@@ -21,4 +21,9 @@ public class MemberRepositoryImpl implements MemberRepository {
     public MemberModel create(MemberModel member) {
         return memberJpaRepository.save(member);
     }
+
+    @Override
+    public MemberModel update(MemberModel member) {
+        return memberJpaRepository.save(member);
+    }
 }
