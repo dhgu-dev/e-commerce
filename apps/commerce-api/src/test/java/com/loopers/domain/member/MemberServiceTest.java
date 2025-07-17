@@ -85,4 +85,39 @@ class MemberServiceTest {
             );
         }
     }
+
+    @DisplayName("포인트를 충전할 때")
+    @Nested
+    class ChargePoints {
+        @DisplayName("없는 회원 아이디를 제공하면 예외를 던진다")
+        @Test
+        void throwsException_whenNotExistUserIdIsProvided() {
+            String notExistUserId = "notExistUser";
+            Long pointsToCharge = 100L;
+
+            when(memberRepository.findByUserId(anyString())).thenReturn(Optional.empty());
+
+            CoreException exception = assertThrows(CoreException.class, () -> memberService.chargePoints(notExistUserId, pointsToCharge));
+
+            verify(memberRepository).findByUserId(notExistUserId);
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
+        }
+
+        @DisplayName("회원 아이디와 포인트를 제공하면 해당 회원의 포인트를 충전한다")
+        @Test
+        void chargesPoints_whenUserIdAndPointsAreProvided() {
+            String userId = "user";
+            Long pointsToCharge = 1000L;
+            MemberModel member = new MemberModel(userId, Gender.FEMALE, "2000-01-01", "test@test.com");
+
+            when(memberRepository.findByUserId(userId)).thenReturn(Optional.of(member));
+            when(memberRepository.update(any(MemberModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            MemberModel updatedMember = memberService.chargePoints(userId, pointsToCharge);
+
+            verify(memberRepository).findByUserId(userId);
+            verify(memberRepository).update(member);
+            assertThat(updatedMember.getPoints()).isEqualTo(pointsToCharge);
+        }
+    }
 }

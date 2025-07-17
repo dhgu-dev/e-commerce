@@ -6,11 +6,14 @@ import com.loopers.support.error.ErrorType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MemberModelTest {
 
@@ -87,6 +90,23 @@ class MemberModelTest {
             CoreException result = assertThrows(CoreException.class, () -> {
                 new MemberModel("test", Gender.MALE, "20/01/01T05:30", "test@test.com");
             });
+            assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+    }
+
+    @DisplayName("포인트 충전을 할 때")
+    @Nested
+    class ChargePoints {
+        @DisplayName("0 이하의 정수로 포인트를 충전 시 실패한다.")
+        @ParameterizedTest
+        @ValueSource(longs = {0L, -1L, -100L})
+        void throwsBadRequestException_whenChargeAmountIsNegative(Long points) {
+            MemberModel member = new MemberModel("test", Gender.MALE, "2020-01-01", "test@test.com");
+
+            CoreException result = assertThrows(CoreException.class, () -> {
+                member.chargePoints(points);
+            });
+            
             assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
     }
