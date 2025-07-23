@@ -51,6 +51,7 @@ sequenceDiagram
     participant BrandController
     participant BrandFacade
     participant BrandRepository
+    participant ProductService
 
     Client->>BrandController: GET /api/v1/brands/{brandId}
     BrandController->>BrandFacade: getBrand(brandId)
@@ -58,7 +59,8 @@ sequenceDiagram
         BrandController-->>Client: 404 Not Found
     end
     BrandFacade->>BrandService: get(brandId)
-    BrandService-->>BrandRepository: find(brandId)
+    BrandService->>BrandRepository: find(brandId)
+    BrandService->>ProductService: getProductsByBrand(brandId)
 ```
 
 ### 상품 상세 정보 조회
@@ -70,7 +72,6 @@ sequenceDiagram
     participant Client
     participant ProductController
     participant ProductFacade
-    participant BrandFacade
     participant ProductService
     participant LikeService
     participant ProductRepository
@@ -97,29 +98,29 @@ POST /api/v1/products/{productId}/likes
 sequenceDiagram
     participant Client
     participant ProductController
-    participant MemberFacade
-    participant ProductFacade
-    participant LikeFacade
+    participant MemberService
+    participant ProductService
     participant LikeService
     participant LikeRepository
+    participant Member
 
     Client->>ProductController: POST /api/v1/products/{productId}/likes -H X-USER-ID
     opt X-USER-ID 헤더가 없는 경우
         ProductController-->>Client: 400 Bad Request
     end
-    ProductController->>MemberFacade: getMember(memberId)
+    ProductController->>MemberService: getMember(memberId)
     opt 존재하지 않는 회원인 경우 
         ProductController-->>Client: 401 Unauthorized
     end
-    ProductController->>ProductFacade: getProduct(productId)
+    ProductController->>ProductService: getProduct(productId)
     opt 존재하지 않는 상품 ID
         ProductController-->>Client: 404 Not Found
     end
-    ProductController->>LikeFacade: likeProduct(memberInfo, productInfo)
-    LikeFacade->>LikeService: like(member, product)
+    ProductController->>LikeService: like(member, product)
     LikeService->>LikeRepository: exists(memberId, productId)
     opt 회원이 해당 상품에 좋아요를 누른 이력이 없는 경우 
-        LikeService-->>LikeRepository: save(like)
+        LikeService->>Member: like(product)
+        LikeService->>LikeRepository: save(like)
     end
 ```
 
@@ -131,29 +132,29 @@ DELETE /api/v1/products/{productId}/likes
 sequenceDiagram
     participant Client
     participant ProductController
-    participant MemberFacade
-    participant ProductFacade
-    participant LikeFacade
+    participant MemberService
+    participant ProductService
     participant LikeService
     participant LikeRepository
+    participant Member
 
     Client->>ProductController: DELETE /api/v1/products/{productId}/likes -H X-USER-ID
     opt X-USER-ID 헤더가 없는 경우
         ProductController-->>Client: 400 Bad Request
     end
-    ProductController->>MemberFacade: getMember(memberId)
+    ProductController->>MemberService: getMember(memberId)
     opt 존재하지 않는 회원인 경우 
         ProductController-->>Client: 401 Unauthorized
     end
-    ProductController->>ProductFacade: getProduct(productId)
+    ProductController->>ProductService: getProduct(productId)
     opt 존재하지 않는 상품 ID
         ProductController-->>Client: 404 Not Found
     end
-    ProductController->>LikeFacade: unlikeProduct(memberInfo, productInfo)
-    LikeFacade->>LikeService: unlike(member, product)
+    ProductController->>LikeService: unlike(member, product)
     LikeService->>LikeRepository: exists(memberId, productId)
     opt 회원이 해당 상품에 좋아요를 누른 이력이 있는 경우 
-        LikeService-->>LikeRepository: delete(like)
+        LikeService->>Member: unlike(product)
+        LikeService->>LikeRepository: delete(like)
     end
 ```
 
