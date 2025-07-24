@@ -52,7 +52,8 @@ erDiagram
     ORDER_ITEM {
         bigint id PK 
         bigint order_id FK 
-        bigint product_id FK 
+        varchar product_name 
+        long product_price 
         int quantity
         timestamp created_at
         timestamp updated_at
@@ -64,6 +65,5 @@ erDiagram
     PRODUCT ||--o{ LIKE : 대상
     BRAND ||--o{ PRODUCT : 소유
     ORDERS ||--o{ ORDER_ITEM : 포함
-    PRODUCT ||--o{ ORDER_ITEM : 참조
 
 ```

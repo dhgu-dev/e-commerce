@@ -9,7 +9,7 @@ classDiagram
     class Product {
         -Long id
         -String name
-        -Integer price
+        -Long price
         -Brand brand
     }
     class Brand {
@@ -17,16 +17,11 @@ classDiagram
         -String name
     }
     class Like {
-        -Member member
         -Product product
     }
-    class Member {
-        -Long id
-    }
 
-    Brand "1" -- "N" Product : 포함
-    Product "1" -- "N" Like : 소유
-    Member "1" -- "N" Like : 소유
+    Brand "1" -- "N" Product : 보유
+    Product "1" -- "N" Like : 집계
 ```
 
 ### 브랜드 정보 조회
@@ -42,7 +37,8 @@ classDiagram
         -String name
         -Brand brand
     }
-    Brand "1" -- "N" Product : 포함
+    
+    Brand "1" -- "N" Product : 보유
 ```
 
 ### 상품 상세 정보 조회
@@ -52,13 +48,12 @@ classDiagram
     class Product {
         -Long id
         -String name
-        -Integer price
+        -Long price
     }
     class Like {
-        -Member member
         -Product product
     }
-    Product "1" -- "N" Like : 소유
+    Product "1" -- "N" Like : 집계
 ```
 
 ## 좋아요 (Likes)
@@ -73,15 +68,14 @@ classDiagram
     }
     class Member {
         -Long id
-        +like(Product)
     }
     class Product {
         -Long id
         -String name
         -Long price
     }
-    Member "1" -- "N" Like : 소유
-    Product "1" -- "N" Like : 소유
+    Member "1" -- "N" Like : 등록
+    Product "1" -- "N" Like : 대상
 ```
 
 ### 상품 좋아요 취소
@@ -94,15 +88,14 @@ classDiagram
     }
     class Member {
         -Long id
-        +unlike(Product)
     }
     class Product {
         -Long id
         -String name
         -Long price
     }
-    Member "1" -- "N" Like : 소유
-    Product "1" -- "N" Like : 소유
+    Member "1" -- "N" Like : 취소
+    Product "1" -- "N" Like : 대상
 ```
 
 ### 내가 좋아요 한 상품 목록 조회
@@ -122,7 +115,7 @@ classDiagram
         -Long price
     }
     Member "1" -- "N" Like : 소유
-    Like "N" -- "1" Product : 참조
+    Product "1" -- "N" Like : 참조
 ```
 
 ## 주문 및 결제
@@ -135,14 +128,17 @@ classDiagram
         -Member member
         -List<OrderItem> orderItems
         -enum status
-        +create(Member, List<OrderItem>)
     }
     class OrderItem {
-        -Product product
+        -Order order
+        -String productName
+        -Long productPrice
         -int quantity
     }
     class Product {
         -Long id
+        -String name
+        -Long price
         -int stock
         +decreaseStock(int)
     }
@@ -153,9 +149,8 @@ classDiagram
     }
 
     Order "1" o-- "N" OrderItem : 포함
-    OrderItem "N" -- "1" Product : 참조
     Member "1" -- "N" Order : 생성
-    Member "1" -- "1" Point : 소유
+    OrderItem "1" -- "1" Product : 참조
 ```
 
 ### 유저의 주문 목록 조회
@@ -172,18 +167,14 @@ classDiagram
         -List<OrderItem> orderItems
     }
     class OrderItem {
-        -Product product
+        -Order order
+        -String productName
+        -Long productPrice
         -int quantity
-    }
-    class Product {
-        -Long id
-        -String name
-        -Long price
     }
 
     Member "1" -- "N" Order : 소유
     Order "1" o-- "N" OrderItem : 포함
-    OrderItem "N" -- "1" Product : 참조
 ```
 
 ### 단일 주문 상세 조회
@@ -198,9 +189,12 @@ classDiagram
         -Member member
         -enum status
         -List<OrderItem> orderItems
+        +hasOwned(member)
     }
     class OrderItem {
-        -Product product
+        -Order order
+        -String productName
+        -Long productPrice
         -int quantity
     }
     class Product {
@@ -211,5 +205,5 @@ classDiagram
 
     Member "1" -- "N" Order : 소유
     Order "1" o-- "N" OrderItem : 포함
-    OrderItem "N" -- "1" Product : 참조
+    OrderItem "1" -- "1" Product : 참조
 ```
