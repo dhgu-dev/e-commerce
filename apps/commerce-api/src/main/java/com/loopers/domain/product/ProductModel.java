@@ -1,0 +1,61 @@
+package com.loopers.domain.product;
+
+import com.loopers.domain.BaseEntity;
+import com.loopers.domain.product.vo.Price;
+import com.loopers.domain.product.vo.Stock;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
+import jakarta.persistence.*;
+import lombok.Getter;
+
+@Entity
+@Table(name = "product")
+public class ProductModel extends BaseEntity {
+
+    @Getter
+    private String name;
+
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "price"))
+    @Getter
+    private Price price;
+
+    @Embedded
+    @AttributeOverride(name = "quantity", column = @Column(name = "stock"))
+    @Getter
+    private Stock stock;
+
+    @Getter
+    private Long brandId;
+
+    @Getter
+    private int likeCount;
+
+    protected ProductModel() {
+    }
+
+    public ProductModel(String name, Price price, Stock stock, Long brandId) {
+        if (name == null || name.isBlank()) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "Product name cannot be null or blank.");
+        }
+        if (price == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "Price cannot be null.");
+        }
+        if (stock == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "Stock cannot be null.");
+        }
+        if (brandId == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "Brand ID cannot be null.");
+        }
+        
+        this.name = name;
+        this.price = price;
+        this.stock = stock;
+        this.brandId = brandId;
+        this.likeCount = 0;
+    }
+
+    public void decreaseStock(long quantity) {
+        this.stock = this.stock.deduct(quantity);
+    }
+}
