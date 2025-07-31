@@ -21,20 +21,20 @@ class PriceTest {
         @Test
         void throwsException_whenAmountIsNullOrNegative() {
             assertAll(
-                    () -> {
-                        CoreException result = assertThrows(
-                                CoreException.class,
-                                () -> Price.of(null)
-                        );
-                        assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
-                    },
-                    () -> {
-                        CoreException result = assertThrows(
-                                CoreException.class,
-                                () -> Price.of(new BigDecimal("-1"))
-                        );
-                        assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
-                    }
+                () -> {
+                    CoreException result = assertThrows(
+                        CoreException.class,
+                        () -> Price.of(null)
+                    );
+                    assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+                },
+                () -> {
+                    CoreException result = assertThrows(
+                        CoreException.class,
+                        () -> Price.of(new BigDecimal("-1"))
+                    );
+                    assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+                }
             );
         }
     }
@@ -48,8 +48,8 @@ class PriceTest {
             Price price = Price.of(new BigDecimal("100"));
 
             CoreException result = assertThrows(
-                    CoreException.class,
-                    () -> price.add(null)
+                CoreException.class,
+                () -> price.add(null)
             );
             assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
@@ -74,8 +74,8 @@ class PriceTest {
             Price price = Price.of(new BigDecimal("100"));
 
             CoreException result = assertThrows(
-                    CoreException.class,
-                    () -> price.subtract(null)
+                CoreException.class,
+                () -> price.subtract(null)
             );
             assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
@@ -87,8 +87,8 @@ class PriceTest {
             Price price2 = Price.of(new BigDecimal("150"));
 
             CoreException result = assertThrows(
-                    CoreException.class,
-                    () -> price1.subtract(price2)
+                CoreException.class,
+                () -> price1.subtract(price2)
             );
             assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
@@ -132,6 +132,29 @@ class PriceTest {
             Price price2 = Price.of(new BigDecimal("100"));
 
             assertThat(price1.hashCode()).isEqualTo(price2.hashCode());
+        }
+    }
+
+    @DisplayName("가격을 곱할 때, ")
+    @Nested
+    class Multiply {
+        @DisplayName("음수를 곱하면 예외가 발생한다.")
+        @Test
+        void throwsException_whenMultiplierIsNegative() {
+            Price price = Price.of(new BigDecimal("100"));
+            CoreException ex = assertThrows(
+                CoreException.class,
+                () -> price.multiply(-1)
+            );
+            assertThat(ex.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+
+        @DisplayName("0 또는 양수를 곱하면 정상적으로 곱해진다.")
+        @Test
+        void canMultiplyPrice() {
+            Price price = Price.of(new BigDecimal("100"));
+            assertThat(price.multiply(0)).isEqualTo(Price.of(BigDecimal.ZERO));
+            assertThat(price.multiply(3)).isEqualTo(Price.of(new BigDecimal("300")));
         }
     }
 }

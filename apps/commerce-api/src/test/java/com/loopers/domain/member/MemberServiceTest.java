@@ -9,8 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -78,10 +80,10 @@ class MemberServiceTest {
 
             verify(memberRepository).create(any(MemberModel.class));
             assertAll(
-                    () -> assertThat(createdMember.getUserId()).isEqualTo(userId),
-                    () -> assertThat(createdMember.getGender()).isEqualTo(gender),
-                    () -> assertThat(createdMember.getBirthdate()).isEqualTo(birthdate),
-                    () -> assertThat(createdMember.getEmail()).isEqualTo(email)
+                () -> assertThat(createdMember.getUserId()).isEqualTo(userId),
+                () -> assertThat(createdMember.getGender()).isEqualTo(gender),
+                () -> assertThat(createdMember.getBirthdate()).isEqualTo(birthdate),
+                () -> assertThat(createdMember.getEmail()).isEqualTo(email)
             );
         }
     }
@@ -118,6 +120,63 @@ class MemberServiceTest {
             verify(memberRepository).findByUserId(userId);
             verify(memberRepository).update(member);
             assertThat(updatedMember.getPoints()).isEqualTo(pointsToCharge);
+        }
+    }
+
+    @DisplayName("포인트 결제(payment) 시")
+    @Nested
+    class Payment {
+
+        @DisplayName("정상적으로 결제하면 포인트가 차감되고 update가 호출된다")
+        @Test
+        void payment_success() {
+            MemberModel member = Mockito.spy(new MemberModel("user", Gender.FEMALE, "2000-01-01", "test@test.com", 1000L));
+            BigDecimal totalPrice = BigDecimal.valueOf(500L);
+
+            when(memberRepository.update(any(MemberModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            memberService.payment(member, totalPrice);
+
+            verify(member).usePoints(500L);
+            verify(memberRepository).update(member);
+            assertThat(member.getPoints()).isEqualTo(500L);
+        }
+
+        @DisplayName("member가 null이면 BAD_REQUEST 예외 발생")
+        @Test
+        void payment_memberNull_throwsException() {
+            CoreException ex = assertThrows(CoreException.class, () -> memberService.payment(null, BigDecimal.valueOf(100)));
+            assertThat(ex.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+
+        @DisplayName("totalPrice가 null이면 BAD_REQUEST 예외 발생")
+        @Test
+        void payment_totalPriceNull_throwsException() {
+            MemberModel member = new MemberModel("user", Gender.FEMALE, "2000-01-01", "test@test.com", 1000L);
+            CoreException ex = assertThrows(CoreException.class, () -> memberService.payment(member, null));
+            assertThat(ex.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+
+        @DisplayName("totalPrice가 0 이하이면 BAD_REQUEST 예외 발생")
+        @Test
+        void payment_totalPriceZeroOrNegative_throwsException() {
+            MemberModel member = new MemberModel("user", Gender.FEMALE, "2000-01-01", "test@test.com", 1000L);
+
+            CoreException ex1 = assertThrows(CoreException.class, () -> memberService.payment(member, BigDecimal.ZERO));
+            assertThat(ex1.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+
+            CoreException ex2 = assertThrows(CoreException.class, () -> memberService.payment(member, BigDecimal.valueOf(-100)));
+            assertThat(ex2.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+
+        @DisplayName("포인트가 부족하면 CONFLICT 예외 발생")
+        @Test
+        void payment_insufficientPoints_throwsException() {
+            MemberModel member = new MemberModel("user", Gender.FEMALE, "2000-01-01", "test@test.com", 100L);
+            BigDecimal totalPrice = BigDecimal.valueOf(200L);
+
+            CoreException ex = assertThrows(CoreException.class, () -> memberService.payment(member, totalPrice));
+            assertThat(ex.getErrorType()).isEqualTo(ErrorType.CONFLICT);
         }
     }
 }

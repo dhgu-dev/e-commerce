@@ -36,8 +36,8 @@ class ProductModelTest {
         void throwsBadRequestException_whenNameIsNullOrBlank(String name) {
             // When & Then
             CoreException result = assertThrows(
-                    CoreException.class,
-                    () -> new ProductModel(name, Price.ZERO, Stock.ZERO, 1L)
+                CoreException.class,
+                () -> new ProductModel(name, Price.ZERO, Stock.ZERO, 1L)
             );
             assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
@@ -47,8 +47,8 @@ class ProductModelTest {
         void throwsBadRequestException_whenPriceIsNull() {
             // When & Then
             CoreException result = assertThrows(
-                    CoreException.class,
-                    () -> new ProductModel("product name", null, Stock.ZERO, 1L)
+                CoreException.class,
+                () -> new ProductModel("product name", null, Stock.ZERO, 1L)
             );
             assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
@@ -58,8 +58,8 @@ class ProductModelTest {
         void throwsBadRequestException_whenStockIsNull() {
             // When & Then
             CoreException result = assertThrows(
-                    CoreException.class,
-                    () -> new ProductModel("product name", Price.ZERO, null, 1L)
+                CoreException.class,
+                () -> new ProductModel("product name", Price.ZERO, null, 1L)
             );
             assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
@@ -69,8 +69,8 @@ class ProductModelTest {
         void throwsBadRequestException_whenBrandIdIsNull() {
             // When & Then
             CoreException result = assertThrows(
-                    CoreException.class,
-                    () -> new ProductModel("product name", Price.ZERO, Stock.ZERO, null)
+                CoreException.class,
+                () -> new ProductModel("product name", Price.ZERO, Stock.ZERO, null)
             );
             assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
@@ -113,6 +113,33 @@ class ProductModelTest {
             // Then
             verify(mockStock).deduct(5L);
             assertThat(productModel.getStock()).isEqualTo(mockStock);
+        }
+    }
+
+    @DisplayName("좋아요 수를 업데이트할 때, ")
+    @Nested
+    class UpdateLikeCount {
+
+        @DisplayName("0 이상의 값이면 정상적으로 업데이트된다")
+        @Test
+        void updateLikeCount_success() {
+            ProductModel product = new ProductModel("상품", Price.ZERO, Stock.ZERO, 1L);
+
+            product.updateLikeCount(10L);
+
+            assertThat(product.getLikeCount()).isEqualTo(10L);
+
+            product.updateLikeCount(0L);
+            assertThat(product.getLikeCount()).isEqualTo(0L);
+        }
+
+        @DisplayName("음수로 업데이트하면 BAD_REQUEST 예외가 발생한다")
+        @Test
+        void updateLikeCount_negative_throwsException() {
+            ProductModel product = new ProductModel("상품", Price.ZERO, Stock.ZERO, 1L);
+
+            CoreException ex = assertThrows(CoreException.class, () -> product.updateLikeCount(-1L));
+            assertThat(ex.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
     }
 }
