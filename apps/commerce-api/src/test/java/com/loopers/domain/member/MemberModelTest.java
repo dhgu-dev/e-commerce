@@ -31,14 +31,14 @@ class MemberModelTest {
             MemberModel memberModel = new MemberModel(userId, gender, birthdate, email);
 
             assertAll(
-                    () -> assertThat(memberModel.getId()).isNotNull(),
-                    () -> assertThat(memberModel.getUserId()).isEqualTo(userId),
-                    () -> assertThat(memberModel.getGender()).isEqualTo(gender),
-                    () -> assertThat(memberModel.getBirthdate()).isEqualTo(
-                            LocalDate.of(2020, 1, 1)
-                    ),
-                    () -> assertThat(memberModel.getEmail()).isEqualTo(email),
-                    () -> assertThat(memberModel.getPoints()).isEqualTo(0L)
+                () -> assertThat(memberModel.getId()).isNotNull(),
+                () -> assertThat(memberModel.getUserId()).isEqualTo(userId),
+                () -> assertThat(memberModel.getGender()).isEqualTo(gender),
+                () -> assertThat(memberModel.getBirthdate()).isEqualTo(
+                    LocalDate.of(2020, 1, 1)
+                ),
+                () -> assertThat(memberModel.getEmail()).isEqualTo(email),
+                () -> assertThat(memberModel.getPoints()).isEqualTo(0L)
             );
         }
 
@@ -106,8 +106,44 @@ class MemberModelTest {
             CoreException result = assertThrows(CoreException.class, () -> {
                 member.chargePoints(points);
             });
-            
+
             assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+    }
+
+    @DisplayName("포인트 사용 시")
+    @Nested
+    class UsePoints {
+
+        @DisplayName("정상적으로 포인트를 사용할 수 있다.")
+        @Test
+        void usePoints_success() {
+            MemberModel member = new MemberModel("test", Gender.MALE, "2020-01-01", "test@test.com", 100L);
+
+            member.usePoints(30L);
+
+            assertThat(member.getPoints()).isEqualTo(70L);
+        }
+
+        @DisplayName("0 이하의 금액을 사용하면 BAD_REQUEST 예외가 발생한다.")
+        @Test
+        void usePoints_zeroOrNegative_throwsException() {
+            MemberModel member = new MemberModel("test", Gender.MALE, "2020-01-01", "test@test.com", 100L);
+
+            CoreException ex1 = assertThrows(CoreException.class, () -> member.usePoints(0L));
+            assertThat(ex1.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+
+            CoreException ex2 = assertThrows(CoreException.class, () -> member.usePoints(-10L));
+            assertThat(ex2.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+        }
+
+        @DisplayName("잔액보다 많은 금액을 사용하면 CONFLICT 예외가 발생한다.")
+        @Test
+        void usePoints_insufficientPoints_throwsException() {
+            MemberModel member = new MemberModel("test", Gender.MALE, "2020-01-01", "test@test.com", 50L);
+
+            CoreException ex = assertThrows(CoreException.class, () -> member.usePoints(100L));
+            assertThat(ex.getErrorType()).isEqualTo(ErrorType.CONFLICT);
         }
     }
 }
