@@ -7,6 +7,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +16,7 @@ public class QueryProductDetailUseCase {
     private final ProductService productService;
     private final BrandService brandService;
 
+    @Transactional(readOnly = true)
     public Result execute(Query query) {
         if (query == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "Query cannot be null");
