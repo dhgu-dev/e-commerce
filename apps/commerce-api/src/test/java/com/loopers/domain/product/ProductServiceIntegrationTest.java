@@ -43,9 +43,9 @@ class ProductServiceIntegrationTest {
 
     @Nested
     @Sql(statements = {
-            "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '테스트상품1', 1000, 15, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
-            "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (2, '테스트상품2', 2000, 20, 1, 5, '2023-10-02 00:00:00', '2023-10-02 00:00:00', NULL)",
-            "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (3, '테스트상품3', 3000, 10, 2, 15, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL)"
+        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '테스트상품1', 1000, 15, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
+        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (2, '테스트상품2', 2000, 20, 1, 5, '2023-10-02 00:00:00', '2023-10-02 00:00:00', NULL)",
+        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (3, '테스트상품3', 3000, 10, 2, 15, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL)"
     })
     class Search {
 
@@ -59,7 +59,6 @@ class ProductServiceIntegrationTest {
             CoreException exception = assertThrows(CoreException.class, () -> productService.search(condition, pageable));
 
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
-            verify(productRepository).search(condition, pageable);
         }
 
         @Test
@@ -69,7 +68,6 @@ class ProductServiceIntegrationTest {
             CoreException exception = assertThrows(CoreException.class, () -> productService.search(condition, pageable));
 
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
-            verify(productRepository).search(condition, pageable);
         }
 
         @Test

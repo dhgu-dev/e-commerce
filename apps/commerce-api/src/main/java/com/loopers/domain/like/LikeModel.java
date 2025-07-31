@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
@@ -18,9 +19,11 @@ import java.time.ZonedDateTime;
 public class LikeModel {
 
     @Id
+    @Getter
     private Long memberId;
 
     @Id
+    @Getter
     private Long productId;
 
     private ZonedDateTime createdAt;

@@ -29,7 +29,7 @@ public class ProductModel extends BaseEntity {
     private Long brandId;
 
     @Getter
-    private int likeCount;
+    private long likeCount;
 
     protected ProductModel() {
     }
@@ -47,15 +47,22 @@ public class ProductModel extends BaseEntity {
         if (brandId == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "Brand ID cannot be null.");
         }
-        
+
         this.name = name;
         this.price = price;
         this.stock = stock;
         this.brandId = brandId;
-        this.likeCount = 0;
+        this.likeCount = 0L;
     }
 
     public void decreaseStock(long quantity) {
         this.stock = this.stock.deduct(quantity);
+    }
+
+    public void updateLikeCount(long likeCount) {
+        if (likeCount < 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "Like count cannot be negative.");
+        }
+        this.likeCount = likeCount;
     }
 }

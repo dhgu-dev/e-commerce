@@ -58,4 +58,13 @@ public class ProductService {
 
         return product.get();
     }
+
+    public ProductModel updateProductLikeCount(ProductModel product, Long likeCount) {
+        if (product == null || likeCount == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "Product and like count cannot be null");
+        }
+
+        product.updateLikeCount(likeCount);
+        return productRepository.save(product);
+    }
 }

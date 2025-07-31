@@ -15,4 +15,6 @@ public interface ProductRepository {
     List<ProductModel> findAll(Set<Long> productIds);
 
     Optional<ProductModel> find(Long productId);
+
+    ProductModel save(ProductModel product);
 }

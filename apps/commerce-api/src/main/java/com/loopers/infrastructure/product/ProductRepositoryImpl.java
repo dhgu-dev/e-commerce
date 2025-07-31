@@ -27,6 +27,7 @@ import static com.loopers.domain.product.QProductModel.productModel;
 @RequiredArgsConstructor
 public class ProductRepositoryImpl implements ProductRepository {
 
+    private final ProductJpaRepository productJpaRepository;
     private final JPAQueryFactory queryFactory;
 
     @Override
@@ -40,11 +41,11 @@ public class ProductRepositoryImpl implements ProductRepository {
 
         List<Pair<String, Direction>> sorts = pageable.getSort().stream().map(order -> Pair.of(order.getProperty(), order.getDirection())).toList();
         return queryFactory.selectFrom(productModel)
-                .where(predicates)
-                .orderBy(sorts.stream().map(this::toOrderBy).toArray(OrderSpecifier<?>[]::new))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+            .where(predicates)
+            .orderBy(sorts.stream().map(this::toOrderBy).toArray(OrderSpecifier<?>[]::new))
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
     }
 
     @Override
@@ -57,9 +58,9 @@ public class ProductRepositoryImpl implements ProductRepository {
         predicates.and(BrandEqualSpecification.of(condition.getBrand()).isSatisfiedBy(productModel));
 
         Long totalCount = queryFactory.select(productModel.count())
-                .from(productModel)
-                .where(predicates)
-                .fetchOne();
+            .from(productModel)
+            .where(predicates)
+            .fetchOne();
         return totalCount != null ? totalCount : 0L;
     }
 
@@ -74,8 +75,8 @@ public class ProductRepositoryImpl implements ProductRepository {
         }
 
         return queryFactory.selectFrom(productModel)
-                .where(productModel.id.in(productIds))
-                .fetch();
+            .where(productModel.id.in(productIds))
+            .fetch();
     }
 
     @Override
@@ -85,8 +86,13 @@ public class ProductRepositoryImpl implements ProductRepository {
         }
 
         return Optional.ofNullable(queryFactory.selectFrom(productModel)
-                .where(productModel.id.eq(productId))
-                .fetchOne());
+            .where(productModel.id.eq(productId))
+            .fetchOne());
+    }
+
+    @Override
+    public ProductModel save(ProductModel product) {
+        return productJpaRepository.save(product);
     }
 
     private OrderSpecifier<?> toOrderBy(Pair<String, Direction> sort) {

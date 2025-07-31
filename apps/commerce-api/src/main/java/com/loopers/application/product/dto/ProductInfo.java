@@ -5,7 +5,7 @@ import com.loopers.domain.product.ProductModel;
 
 import java.math.BigDecimal;
 
-public record ProductInfo(Long id, String name, BigDecimal price, Long stock, int likeCount, String brandName) {
+public record ProductInfo(Long id, String name, BigDecimal price, Long stock, long likeCount, String brandName) {
 
     public static ProductInfo from(ProductModel productModel, BrandModel brandModel) {
         return new ProductInfo(
