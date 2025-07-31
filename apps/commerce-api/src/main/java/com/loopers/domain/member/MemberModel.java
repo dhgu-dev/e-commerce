@@ -97,4 +97,14 @@ public class MemberModel extends BaseEntity {
         this.points += amount;
         return this.points;
     }
+
+    public void usePoints(long amount) {
+        if (amount <= 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "사용 금액은 0보다 커야 합니다.");
+        }
+        if (this.points < amount) {
+            throw new CoreException(ErrorType.CONFLICT, "포인트가 부족합니다.");
+        }
+        this.points -= amount;
+    }
 }

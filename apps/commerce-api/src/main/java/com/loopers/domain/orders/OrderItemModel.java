@@ -6,6 +6,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -18,8 +19,10 @@ public class OrderItemModel extends BaseEntity {
     private OrdersModel orders;
 
     @Embedded
+    @Getter
     private ProductSnapshot productSnapshot;
 
+    @Getter
     private Long quantity;
 
     public OrderItemModel(OrdersModel orders, ProductSnapshot productSnapshot, Long quantity) {

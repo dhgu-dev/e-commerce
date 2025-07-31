@@ -47,6 +47,13 @@ public class Price implements Serializable {
         return new Price(this.amount.subtract(other.amount));
     }
 
+    public Price multiply(long multiplier) {
+        if (multiplier < 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "곱할 수는 음수가 될 수 없습니다.");
+        }
+        return Price.of(this.amount.multiply(BigDecimal.valueOf(multiplier)));
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;

@@ -35,7 +35,7 @@ public class Stock implements Serializable {
             throw new CoreException(ErrorType.BAD_REQUEST, "감소할 재고 수량은 음수일 수 없습니다.");
         }
         if (this.quantity < quantity) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "재고가 부족합니다.");
+            throw new CoreException(ErrorType.CONFLICT, "재고가 부족합니다.");
         }
         return new Stock(this.quantity - quantity);
     }

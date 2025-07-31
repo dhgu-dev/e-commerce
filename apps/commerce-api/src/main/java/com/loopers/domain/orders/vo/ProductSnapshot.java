@@ -7,6 +7,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Embedded;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
@@ -16,13 +17,16 @@ import java.io.Serializable;
 public class ProductSnapshot implements Serializable {
 
     @Column(name = "product_id")
+    @Getter
     private Long productId;
 
     @Column(name = "product_name")
+    @Getter
     private String name;
 
     @Embedded
     @AttributeOverride(name = "amount", column = @Column(name = "product_price"))
+    @Getter
     private Price price;
 
     private ProductSnapshot(Long productId, String name, Price price) {
@@ -35,7 +39,7 @@ public class ProductSnapshot implements Serializable {
         if (price == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "Product price cannot be null");
         }
-        
+
         this.productId = productId;
         this.name = name;
         this.price = price;

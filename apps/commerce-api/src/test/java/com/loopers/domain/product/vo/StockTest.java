@@ -38,7 +38,7 @@ class StockTest {
         void throwsException_whenDeductingMoreThanAvailableStock() {
             Stock stock = Stock.of(5L);
             CoreException result = assertThrows(CoreException.class, () -> stock.deduct(10L));
-            assertThat(result.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+            assertThat(result.getErrorType()).isEqualTo(ErrorType.CONFLICT);
         }
     }
 

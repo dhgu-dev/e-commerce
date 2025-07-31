@@ -3,6 +3,7 @@ package com.loopers.domain.orders.vo;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Embeddable;
+import lombok.Getter;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ public class Price implements Serializable {
 
     public static final Price ZERO = new Price(BigDecimal.ZERO);
 
+    @Getter
     private BigDecimal amount;
 
     protected Price() {

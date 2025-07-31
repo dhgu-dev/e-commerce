@@ -67,4 +67,16 @@ public class ProductService {
         product.updateLikeCount(likeCount);
         return productRepository.save(product);
     }
+
+    public void decreaseStock(ProductModel product, long quantity) {
+        if (product == null || quantity <= 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "Product cannot be null and quantity must be greater than zero");
+        }
+        if (product.getStock().getQuantity() < quantity) {
+            throw new CoreException(ErrorType.CONFLICT, "Insufficient stock for product ID: " + product.getId());
+        }
+
+        product.decreaseStock(quantity);
+        productRepository.save(product);
+    }
 }
