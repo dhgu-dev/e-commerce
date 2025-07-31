@@ -3,6 +3,7 @@ package com.loopers.domain.product.vo;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Embeddable;
+import lombok.Getter;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -12,6 +13,7 @@ public class Stock implements Serializable {
 
     public static final Stock ZERO = new Stock(0L);
 
+    @Getter
     private long quantity;
 
     protected Stock() {

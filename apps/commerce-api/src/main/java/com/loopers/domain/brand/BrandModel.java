@@ -6,6 +6,7 @@ import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -13,8 +14,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BrandModel extends BaseEntity {
 
+    @Getter
     private String name;
 
+    @Getter
     private String description;
 
     public BrandModel(String name, String description) {
