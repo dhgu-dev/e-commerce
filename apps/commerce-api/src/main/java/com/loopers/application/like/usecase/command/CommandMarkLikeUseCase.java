@@ -9,6 +9,7 @@ import com.loopers.domain.product.ProductService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +30,10 @@ public class CommandMarkLikeUseCase {
         MemberModel member = memberService.getMember(command.memberInfo.userId());
         ProductModel product = productService.getDetail(command.productId());
 
-        likeService.like(member, product);
+        try {
+            likeService.like(member, product);
+        } catch (DataIntegrityViolationException _) {
+        }
 
         productService.updateProductLikeCount(product, likeService.getLikeCount(product));
     }
