@@ -69,7 +69,6 @@ class CommandUnmarkLikeUseCaseTest {
                     commandUnmarkLikeUseCase.execute(new CommandUnmarkLikeUseCase.Command(memberInfo, productId));
                     successCount.incrementAndGet();
                 } catch (Exception e) {
-                    System.err.println(e.getClass().getName() + ": " + e.getCause().getClass().getName());
                     failureCount.incrementAndGet();
                 } finally {
                     latch.countDown();
