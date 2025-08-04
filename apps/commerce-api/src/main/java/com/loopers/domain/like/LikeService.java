@@ -37,7 +37,7 @@ public class LikeService {
             throw new CoreException(ErrorType.BAD_REQUEST, "Member and Product cannot be null");
         }
 
-        Optional<LikeModel> like = likeRepository.find(member.getId(), product.getId());
+        Optional<LikeModel> like = likeRepository.findWithLock(member.getId(), product.getId());
         like.ifPresent(likeRepository::delete);
     }
 

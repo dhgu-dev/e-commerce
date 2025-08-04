@@ -26,7 +26,6 @@ public class LikeRepositoryImpl implements LikeRepository {
         return Optional.ofNullable(
             queryFactory.selectFrom(likeModel)
                 .where(likeModel.memberId.eq(memberId).and(likeModel.productId.eq(productId)))
-                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
                 .fetchOne()
         );
     }
@@ -67,5 +66,15 @@ public class LikeRepositoryImpl implements LikeRepository {
             .where(likeModel.memberId.eq(memberId))
             .fetchOne();
         return count != null ? count : 0L;
+    }
+
+    @Override
+    public Optional<LikeModel> findWithLock(Long memberId, Long productId) {
+        return Optional.ofNullable(
+            queryFactory.selectFrom(likeModel)
+                .where(likeModel.memberId.eq(memberId).and(likeModel.productId.eq(productId)))
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .fetchOne()
+        );
     }
 }
