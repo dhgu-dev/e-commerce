@@ -6,7 +6,6 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.*;
 import lombok.Getter;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -31,9 +30,8 @@ public class MemberModel extends BaseEntity {
     @Getter
     private Long points;
 
-    @Version
     @Getter
-    @ColumnDefault("0")
+    @Version
     private Long version;
 
     protected MemberModel() {
@@ -77,7 +75,7 @@ public class MemberModel extends BaseEntity {
         this.birthdate = parsedBirthdate;
         this.email = email;
         this.points = points;
-        this.version = 0L;
+        this.version = null;
     }
 
     public Long chargePoints(Long amount) {

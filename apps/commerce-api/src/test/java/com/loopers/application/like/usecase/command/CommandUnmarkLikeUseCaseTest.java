@@ -38,9 +38,9 @@ class CommandUnmarkLikeUseCaseTest {
     @Test
     @Sql(statements = {
         "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '테스트상품1', 1000, 15, 1, 3, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
-        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at) VALUES (1, 'testUser1', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL)",
-        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at) VALUES (2, 'testUser2', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL)",
-        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at) VALUES (3, 'testUser3', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL)",
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser1', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)",
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (2, 'testUser2', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)",
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (3, 'testUser3', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)",
         "insert into likes (created_at, member_id, product_id) values ('2023-10-01 12:00:00', 1, 1);",
         "insert into likes (created_at, member_id, product_id) values ('2023-10-01 12:00:00', 2, 1);",
         "insert into likes (created_at, member_id, product_id) values ('2023-10-01 12:00:00', 3, 1);"

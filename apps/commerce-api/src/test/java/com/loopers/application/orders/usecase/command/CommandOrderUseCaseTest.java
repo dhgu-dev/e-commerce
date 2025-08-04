@@ -42,7 +42,7 @@ class CommandOrderUseCaseTest {
         "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '테스트상품1', 1000, 15, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
         "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (2, '테스트상품2', 2000, 10, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
         "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (3, '테스트상품3', 3000, 5, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
-        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at) VALUES (1, 'testUser', 'MALE', 'test@test.com', '2024-01-01', 10000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL)"
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser', 'MALE', 'test@test.com', '2024-01-01', 10000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
     })
     void 동일한_유저가_여러_기기에서_동시에_주문해도_포인트가_중복_차감되지_않아야_한다() throws InterruptedException {
         int threadCount = 20;

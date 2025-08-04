@@ -39,7 +39,7 @@ class CommandMarkLikeUseCaseTest {
     @Test
     @Sql(statements = {
         "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '테스트상품1', 1000, 15, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
-        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at) VALUES (1, 'testUser', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL)"
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
     })
     void 멱등성_동시에_요청해도_하나만_반영한다() throws InterruptedException {
         int threadCount = 5;
