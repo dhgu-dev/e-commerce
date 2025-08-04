@@ -1,6 +1,5 @@
 package com.loopers.application.like.usecase.command;
 
-import com.loopers.application.like.usecase.command.CommandMarkLikeUseCase.Command;
 import com.loopers.application.member.MemberInfo;
 import com.loopers.domain.like.LikeRepository;
 import com.loopers.domain.member.enums.Gender;
@@ -20,10 +19,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-class CommandMarkLikeUseCaseTest {
+class CommandUnmarkLikeUseCaseTest {
 
     @Autowired
-    private CommandMarkLikeUseCase commandMarkLikeUseCase;
+    private CommandUnmarkLikeUseCase commandUnmarkLikeUseCase;
 
     @Autowired
     private LikeRepository likeRepository;
@@ -38,14 +37,19 @@ class CommandMarkLikeUseCaseTest {
 
     @Test
     @Sql(statements = {
-        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '테스트상품1', 1000, 15, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
-        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at) VALUES (1, 'testUser', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL)"
+        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '테스트상품1', 1000, 15, 1, 3, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at) VALUES (1, 'testUser1', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL)",
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at) VALUES (2, 'testUser2', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL)",
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at) VALUES (3, 'testUser3', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL)",
+        "insert into likes (created_at, member_id, product_id) values ('2023-10-01 12:00:00', 1, 1);",
+        "insert into likes (created_at, member_id, product_id) values ('2023-10-01 12:00:00', 2, 1);",
+        "insert into likes (created_at, member_id, product_id) values ('2023-10-01 12:00:00', 3, 1);"
     })
-    void 멱등성_동시에_요청해도_하나만_반영한다() throws InterruptedException {
+    void 멱등성_동시에_요청해도_같은_결과를_반환한다() throws InterruptedException {
         int threadCount = 5;
         MemberInfo memberInfo = new MemberInfo(
             1L,
-            "testUser",
+            "testUser1",
             Gender.MALE,
             LocalDate.of(2024, 1, 1),
             "test@test.com",
@@ -62,9 +66,10 @@ class CommandMarkLikeUseCaseTest {
         for (int i = 0; i < threadCount; i++) {
             executor.submit(() -> {
                 try {
-                    commandMarkLikeUseCase.execute(new Command(memberInfo, productId));
+                    commandUnmarkLikeUseCase.execute(new CommandUnmarkLikeUseCase.Command(memberInfo, productId));
                     successCount.incrementAndGet();
                 } catch (Exception e) {
+                    System.err.println(e.getClass().getName() + ": " + e.getCause().getClass().getName());
                     failureCount.incrementAndGet();
                 } finally {
                     latch.countDown();
@@ -77,6 +82,6 @@ class CommandMarkLikeUseCaseTest {
         long likeCount = likeRepository.getProductLikeCount(productId);
 
         assertThat(successCount.get()).isEqualTo(threadCount);
-        assertThat(likeCount).isEqualTo(1);
+        assertThat(likeCount).isEqualTo(2);
     }
 }

@@ -4,6 +4,7 @@ import com.loopers.domain.like.LikeModel;
 import com.loopers.domain.like.LikeRepository;
 import com.loopers.domain.member.MemberModel;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -25,6 +26,7 @@ public class LikeRepositoryImpl implements LikeRepository {
         return Optional.ofNullable(
             queryFactory.selectFrom(likeModel)
                 .where(likeModel.memberId.eq(memberId).and(likeModel.productId.eq(productId)))
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
                 .fetchOne()
         );
     }
