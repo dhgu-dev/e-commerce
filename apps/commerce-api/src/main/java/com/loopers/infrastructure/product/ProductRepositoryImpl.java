@@ -10,6 +10,7 @@ import com.loopers.support.error.ErrorType;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -103,5 +104,14 @@ public class ProductRepositoryImpl implements ProductRepository {
             case LIKES -> direction.isAscending() ? productModel.likeCount.asc() : productModel.likeCount.desc();
             case PRICE -> direction.isAscending() ? productModel.price.amount.asc() : productModel.price.amount.desc();
         };
+    }
+
+    @Override
+    public Optional<ProductModel> findWithLock(Long productId) {
+        return Optional.ofNullable(queryFactory.selectFrom(productModel)
+            .where(productModel.id.eq(productId))
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .fetchOne()
+        );
     }
 }

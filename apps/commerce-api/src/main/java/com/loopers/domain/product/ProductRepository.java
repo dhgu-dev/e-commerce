@@ -17,4 +17,6 @@ public interface ProductRepository {
     Optional<ProductModel> find(Long productId);
 
     ProductModel save(ProductModel product);
+
+    Optional<ProductModel> findWithLock(Long productId);
 }
