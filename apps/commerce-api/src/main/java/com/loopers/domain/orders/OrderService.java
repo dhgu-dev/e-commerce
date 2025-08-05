@@ -29,6 +29,7 @@ public class OrderService {
             .reduce(BigDecimal.ZERO, BigDecimal::add));
 
         OrdersModel order = new OrdersModel(member.getId(), totalPrice);
+        OrdersModel savedOrder = orderRepository.save(order);
 
         for (Pair<ProductModel, Long> pair : products) {
             ProductModel product = pair.getFirst();
@@ -39,15 +40,14 @@ public class OrderService {
             }
 
             OrderItemModel item = new OrderItemModel(
-                order,
+                savedOrder,
                 ProductSnapshot.of(product.getId(), product.getName(), Price.of(product.getPrice().getAmount())),
                 quantity
             );
-            order.addItem(item);
+            savedOrder.addItem(item);
         }
 
-        OrdersModel savedOrder = orderRepository.save(order);
-        orderRepository.saveAll(order.getItems());
+        orderRepository.saveAll(savedOrder.getItems());
         return savedOrder;
     }
 

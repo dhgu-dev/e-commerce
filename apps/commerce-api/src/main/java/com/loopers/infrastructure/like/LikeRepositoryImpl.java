@@ -4,6 +4,7 @@ import com.loopers.domain.like.LikeModel;
 import com.loopers.domain.like.LikeRepository;
 import com.loopers.domain.member.MemberModel;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.LockModeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -65,5 +66,15 @@ public class LikeRepositoryImpl implements LikeRepository {
             .where(likeModel.memberId.eq(memberId))
             .fetchOne();
         return count != null ? count : 0L;
+    }
+
+    @Override
+    public Optional<LikeModel> findWithLock(Long memberId, Long productId) {
+        return Optional.ofNullable(
+            queryFactory.selectFrom(likeModel)
+                .where(likeModel.memberId.eq(memberId).and(likeModel.productId.eq(productId)))
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .fetchOne()
+        );
     }
 }

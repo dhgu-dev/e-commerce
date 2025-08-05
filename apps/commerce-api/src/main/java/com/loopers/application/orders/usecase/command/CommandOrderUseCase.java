@@ -8,7 +8,10 @@ import com.loopers.domain.orders.ExternalServiceOutputPort;
 import com.loopers.domain.orders.OrderService;
 import com.loopers.domain.orders.OrdersModel;
 import com.loopers.domain.product.ProductModel;
+import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductService;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,7 @@ public class CommandOrderUseCase {
     private final ProductService productService;
     private final OrderService orderService;
     private final ExternalServiceOutputPort deliveryClient;
+    private final ProductRepository productRepository;
 
     @Transactional()
     public Result execute(Command command) {
@@ -39,7 +43,9 @@ public class CommandOrderUseCase {
             Long productId = command.productIds().get(i);
             long quantity = command.quantities().get(i);
 
-            ProductModel product = productService.getDetail(productId);
+            ProductModel product = productRepository.findWithLock(productId).orElseThrow(
+                () -> new CoreException(ErrorType.NOT_FOUND, "Product not found with ID: " + productId)
+            );
             productService.decreaseStock(product, quantity);
             items.add(Pair.of(product, quantity));
 
