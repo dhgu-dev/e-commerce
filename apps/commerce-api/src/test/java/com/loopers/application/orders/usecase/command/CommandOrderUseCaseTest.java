@@ -1,9 +1,13 @@
 package com.loopers.application.orders.usecase.command;
 
 import com.loopers.application.member.MemberInfo;
+import com.loopers.domain.coupon.CouponModel;
+import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberRepository;
 import com.loopers.domain.member.enums.Gender;
+import com.loopers.domain.orders.OrderRepository;
+import com.loopers.domain.orders.OrdersModel;
 import com.loopers.domain.product.ProductModel;
 import com.loopers.domain.product.ProductRepository;
 import com.loopers.utils.DatabaseCleanUp;
@@ -33,6 +37,12 @@ class CommandOrderUseCaseTest {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private CouponRepository couponRepository;
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
@@ -138,5 +148,48 @@ class CommandOrderUseCaseTest {
 
         assertThat(failureCount.get()).isEqualTo(0);
         assertThat(successCount.get()).isEqualTo(threadCount);
+    }
+
+    @Test
+    @Sql(statements = {
+        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '테스트상품1', 1000, 15, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser1', 'MALE', 'test@test.com', '2024-01-01', 10000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)",
+        "insert into coupon (id, amount, rate, created_at, deleted_at, issued_at, member_id, code, discount_type, target_scope, version) values (1, 500, null, '2023-10-01 12:00:00', null, '2023-10-01 12:00:00', 1, 'COUPON_12345', 'FIXED_AMOUNT', 'ORDER', 0)"
+    })
+    void 동일한_쿠폰으로_여러_기기에서_동시에_주문해도_쿠폰은_단_한번만_사용되어야_한다() throws InterruptedException {
+        final int threadCount = 5;
+        MemberModel member = memberRepository.findByUserId("testUser1").orElseThrow();
+        Long couponId = 1L;
+
+        List<Long> productIds = List.of(1L);
+        List<Long> quantities = List.of(1L);
+
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        AtomicInteger successCount = new AtomicInteger();
+        AtomicInteger failureCount = new AtomicInteger();
+
+        for (int i = 0; i < threadCount; i++) {
+            executor.submit(() -> {
+                try {
+                    commandOrderUseCase.execute(new CommandOrderUseCase.Command(MemberInfo.from(member), productIds, quantities, couponId));
+                    successCount.incrementAndGet();
+                } catch (Exception e) {
+                    failureCount.incrementAndGet();
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+
+        CouponModel couponModel = couponRepository.find(couponId).orElseThrow();
+        List<OrdersModel> orders = orderRepository.searchByCoupon(couponId);
+
+        assertThat(couponModel.getDeletedAt()).isNotNull();
+        assertThat(orders.size()).isEqualTo(1);
+        assertThat(successCount.get()).isEqualTo(1);
     }
 }

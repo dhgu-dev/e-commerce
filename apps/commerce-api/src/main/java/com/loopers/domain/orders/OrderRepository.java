@@ -12,4 +12,6 @@ public interface OrderRepository {
     List<OrdersModel> search(Long memberId);
 
     Optional<OrdersModel> find(Long orderId);
+
+    List<OrdersModel> searchByCoupon(Long couponId);
 }
