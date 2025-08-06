@@ -19,7 +19,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
 
-    public OrdersModel order(MemberModel member, List<Pair<ProductModel, Long>> products) {
+    public OrdersModel order(MemberModel member, List<Pair<ProductModel, Long>> products, Long couponId) {
         if (member == null || products == null || products.isEmpty()) {
             throw new CoreException(ErrorType.BAD_REQUEST, "Member and Products cannot be null or empty.");
         }
@@ -28,14 +28,14 @@ public class OrderService {
             .map(pair -> pair.getFirst().getPrice().multiply(pair.getSecond()).getAmount())
             .reduce(BigDecimal.ZERO, BigDecimal::add));
 
-        OrdersModel order = new OrdersModel(member.getId(), totalPrice);
+        OrdersModel order = new OrdersModel(member.getId(), totalPrice, couponId);
         OrdersModel savedOrder = orderRepository.save(order);
 
         for (Pair<ProductModel, Long> pair : products) {
             ProductModel product = pair.getFirst();
             Long quantity = pair.getSecond();
 
-            if (product == null || quantity == null || quantity <= 0) {
+            if (quantity <= 0) {
                 throw new CoreException(ErrorType.BAD_REQUEST, "Product and quantity must be valid.");
             }
 

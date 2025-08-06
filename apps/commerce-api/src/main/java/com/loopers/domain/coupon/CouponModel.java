@@ -16,7 +16,12 @@ public class CouponModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Getter
     private final Long id = 0L;
+
+    @Getter
+    @Version
+    private Long version;
 
     @Column(unique = true, nullable = false, updatable = false)
     @Getter
@@ -43,6 +48,7 @@ public class CouponModel {
     private ZonedDateTime issuedAt;
 
     @Column(name = "deleted_at")
+    @Getter
     private ZonedDateTime deletedAt;
 
     public CouponModel(DiscountMethod discountMethod, TargetScope targetScope) {
@@ -52,6 +58,7 @@ public class CouponModel {
         this.code = UUID.randomUUID().toString();
         this.discountMethod = discountMethod;
         this.targetScope = targetScope;
+        this.version = 0L;
     }
 
     public CouponModel(DiscountMethod discountMethod, TargetScope targetScope, Long memberId) {
@@ -63,6 +70,7 @@ public class CouponModel {
         this.targetScope = targetScope;
         this.memberId = memberId;
         this.issuedAt = ZonedDateTime.now();
+        this.version = 0L;
     }
 
     public void issueTo(Long memberId) {
@@ -77,7 +85,18 @@ public class CouponModel {
         if (this.discountMethod == null) {
             throw new IllegalStateException("할인 규칙이 설정되지 않았습니다.");
         }
+        if (this.deletedAt != null) {
+            throw new IllegalStateException("사용된 쿠폰입니다. 사용할 수 없습니다.");
+        }
+        delete();
         return this.discountMethod.toPolicy().applyDiscount(originalPrice);
+    }
+
+    public boolean hasOwned(Long memberId) {
+        if (memberId == null || this.memberId == null) {
+            return false;
+        }
+        return this.memberId.equals(memberId);
     }
 
     @PrePersist

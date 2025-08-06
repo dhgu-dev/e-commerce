@@ -71,7 +71,7 @@ class CommandOrderUseCaseTest {
         for (int i = 0; i < threadCount; i++) {
             executor.submit(() -> {
                 try {
-                    commandOrderUseCase.execute(new CommandOrderUseCase.Command(memberInfo, productIds, quantities));
+                    commandOrderUseCase.execute(new CommandOrderUseCase.Command(memberInfo, productIds, quantities, null));
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
@@ -121,7 +121,7 @@ class CommandOrderUseCaseTest {
             final int memberIndex = i % memberInfos.size();
             executor.submit(() -> {
                 try {
-                    commandOrderUseCase.execute(new CommandOrderUseCase.Command(memberInfos.get(memberIndex), productIds, quantities));
+                    commandOrderUseCase.execute(new CommandOrderUseCase.Command(memberInfos.get(memberIndex), productIds, quantities, null));
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
