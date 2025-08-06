@@ -5,7 +5,6 @@ import com.loopers.domain.coupon.CouponModel;
 import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberRepository;
-import com.loopers.domain.member.enums.Gender;
 import com.loopers.domain.orders.OrderRepository;
 import com.loopers.domain.orders.OrdersModel;
 import com.loopers.domain.product.ProductModel;
@@ -17,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -57,20 +55,15 @@ class CommandOrderUseCaseTest {
         "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '테스트상품1', 1000, 15, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
         "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (2, '테스트상품2', 2000, 10, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
         "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (3, '테스트상품3', 3000, 5, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
-        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser', 'MALE', 'test@test.com', '2024-01-01', 10000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
+        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (4, '테스트상품4', 4000, 5, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
+        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (5, '테스트상품5', 5000, 5, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser', 'MALE', 'test@test.com', '2024-01-01', 20000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
     })
-    void 동일한_유저가_여러_기기에서_동시에_주문해도_포인트가_중복_차감되지_않아야_한다() throws InterruptedException {
-        final int threadCount = 20;
-        MemberInfo memberInfo = new MemberInfo(
-            1L,
-            "testUser",
-            Gender.MALE,
-            LocalDate.of(2024, 1, 1),
-            "test@test.com",
-            10000L
-        );
-        List<Long> productIds = List.of(1L, 2L, 3L);
-        List<Long> quantities = List.of(1L, 1L, 1L);
+    void 동일한_유저가_서로_다른_주문을_동시에_수행해도_포인트가_정상적으로_차감되어야_한다() throws InterruptedException {
+        final int threadCount = 5;
+        MemberInfo memberInfo = MemberInfo.from(memberRepository.findByUserId("testUser").orElseThrow());
+        List<Long> productIds = List.of(1L, 2L, 3L, 4L, 5L);
+        List<Long> quantities = List.of(1L, 1L, 1L, 1L, 1L);
 
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);
@@ -79,9 +72,10 @@ class CommandOrderUseCaseTest {
         AtomicInteger failureCount = new AtomicInteger();
 
         for (int i = 0; i < threadCount; i++) {
+            final int itemIndex = i % productIds.size();
             executor.submit(() -> {
                 try {
-                    commandOrderUseCase.execute(new CommandOrderUseCase.Command(memberInfo, productIds, quantities, null));
+                    commandOrderUseCase.execute(new CommandOrderUseCase.Command(memberInfo, List.of(productIds.get(itemIndex)), List.of(quantities.get(itemIndex)), null));
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
@@ -95,9 +89,8 @@ class CommandOrderUseCaseTest {
 
         MemberModel member = memberRepository.findByUserId("testUser").orElseThrow();
 
-        assertThat(failureCount.get()).isEqualTo(19);
-        assertThat(successCount.get()).isEqualTo(1);
-        assertThat(member.getPoints()).isEqualTo(4000L);
+        assertThat(successCount.get()).isEqualTo(threadCount);
+        assertThat(member.getPoints()).isEqualTo(5000L);
     }
 
     @Test

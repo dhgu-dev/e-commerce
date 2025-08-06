@@ -5,6 +5,7 @@ import com.loopers.application.orders.dto.OrderInfo;
 import com.loopers.domain.coupon.CouponModel;
 import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.member.MemberModel;
+import com.loopers.domain.member.MemberRepository;
 import com.loopers.domain.member.MemberService;
 import com.loopers.domain.orders.ExternalServiceOutputPort;
 import com.loopers.domain.orders.OrderService;
@@ -33,10 +34,13 @@ public class CommandOrderUseCase {
     private final ExternalServiceOutputPort deliveryClient;
     private final ProductRepository productRepository;
     private final CouponRepository couponRepository;
+    private final MemberRepository memberRepository;
 
     @Transactional()
     public Result execute(Command command) {
-        MemberModel member = memberService.getMember(command.memberInfo().userId());
+        MemberModel member = memberRepository.findWithLock(command.memberInfo().id()).orElseThrow(
+            () -> new CoreException(ErrorType.NOT_FOUND, "Member not found with ID: " + command.memberInfo().id())
+        );
 
         CouponModel coupon = null;
         if (command.couponId() != null) {

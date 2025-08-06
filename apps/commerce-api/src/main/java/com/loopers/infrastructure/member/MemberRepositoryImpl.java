@@ -26,4 +26,9 @@ public class MemberRepositoryImpl implements MemberRepository {
     public MemberModel update(MemberModel member) {
         return memberJpaRepository.save(member);
     }
+
+    @Override
+    public Optional<MemberModel> findWithLock(Long id) {
+        return memberJpaRepository.findWithLock(id);
+    }
 }
