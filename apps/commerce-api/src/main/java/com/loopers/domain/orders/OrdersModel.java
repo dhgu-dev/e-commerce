@@ -37,6 +37,10 @@ public class OrdersModel extends BaseEntity {
     @Getter
     private Set<OrderItemModel> items = new LinkedHashSet<>();
 
+    public OrdersModel(Long memberId, Price totalPrice) {
+        this(memberId, totalPrice, null);
+    }
+
     public OrdersModel(Long memberId, Price totalPrice, Long couponId) {
         if (memberId == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "Member ID cannot be null.");

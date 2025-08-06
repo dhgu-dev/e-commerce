@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -39,15 +38,16 @@ public class CommandOrderUseCase {
     public Result execute(Command command) {
         MemberModel member = memberService.getMember(command.memberInfo().userId());
 
-        Optional<CouponModel> coupon = couponRepository.find(command.couponId());
+        CouponModel coupon = null;
         if (command.couponId() != null) {
-            if (coupon.isEmpty()) {
+            coupon = couponRepository.find(command.couponId()).orElse(null);
+            if (coupon == null) {
                 throw new CoreException(ErrorType.NOT_FOUND, "Coupon not found with ID: " + command.couponId());
             }
-            if (coupon.get().getDeletedAt() != null) {
+            if (coupon.getDeletedAt() != null) {
                 throw new CoreException(ErrorType.BAD_REQUEST, "사용할 수 없는 쿠폰입니다.");
             }
-            if (coupon.get().getIssuedAt() == null || !coupon.get().hasOwned(member.getId())) {
+            if (coupon.getIssuedAt() == null || !coupon.hasOwned(member.getId())) {
                 throw new CoreException(ErrorType.BAD_REQUEST, "사용할 수 없는 쿠폰입니다.");
             }
         }
@@ -70,16 +70,16 @@ public class CommandOrderUseCase {
         }
 
         // 쿠폰 사용
-        if (coupon.isPresent()) {
-            totalPrice = coupon.get().apply(totalPrice);
-            couponRepository.saveAndFlush(coupon.get());
+        if (coupon != null) {
+            totalPrice = coupon.apply(totalPrice);
+            couponRepository.saveAndFlush(coupon);
         }
 
         // 포인트 차감
         memberService.payment(member, totalPrice);
 
         // 주문 상품 정보 저장
-        OrdersModel order = orderService.order(member, items, coupon.map(CouponModel::getId).orElse(null));
+        OrdersModel order = orderService.order(member, items, coupon != null ? coupon.getId() : null);
 
         // 주문 정보 전송
         deliveryClient.send(order);
