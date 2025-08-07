@@ -33,7 +33,7 @@ public class OrdersModel extends BaseEntity {
     @Getter
     private OrderStatus status;
 
-    @OneToMany(mappedBy = "orders", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "orders", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @Getter
     private Set<OrderItemModel> items = new LinkedHashSet<>();
 
@@ -58,5 +58,12 @@ public class OrdersModel extends BaseEntity {
     public void addItem(OrderItemModel item) {
         items.add(item);
         item.setOrders(this);
+    }
+
+    public void process() {
+        if (this.status != OrderStatus.NOT_PAID) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "Order is already processed.");
+        }
+        this.status = OrderStatus.PAID;
     }
 }

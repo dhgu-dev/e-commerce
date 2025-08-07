@@ -22,7 +22,7 @@ public class CommandMarkLikeUseCase {
     private final LikeService likeService;
 
     @Transactional
-    void execute(Command command) {
+    public void execute(Command command) {
         if (command == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "Command cannot be null");
         }

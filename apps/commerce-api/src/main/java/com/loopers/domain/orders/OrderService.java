@@ -47,7 +47,6 @@ public class OrderService {
             savedOrder.addItem(item);
         }
 
-        orderRepository.saveAll(savedOrder.getItems());
         return savedOrder;
     }
 
