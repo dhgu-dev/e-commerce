@@ -64,7 +64,7 @@ class LikeServiceTest {
         LikeModel like = mock(LikeModel.class);
         when(member.getId()).thenReturn(1L);
         when(product.getId()).thenReturn(2L);
-        when(likeRepository.find(1L, 2L)).thenReturn(Optional.of(like));
+        when(likeRepository.findWithLock(1L, 2L)).thenReturn(Optional.of(like));
 
         likeService.unlike(member, product);
 
@@ -75,9 +75,7 @@ class LikeServiceTest {
     void unlike_좋아요없으면_delete_호출안함() {
         MemberModel member = mock(MemberModel.class);
         ProductModel product = mock(ProductModel.class);
-        when(member.getId()).thenReturn(1L);
-        when(product.getId()).thenReturn(2L);
-        when(likeRepository.find(1L, 2L)).thenReturn(Optional.empty());
+        when(likeRepository.findWithLock(any(), any())).thenReturn(Optional.empty());
 
         likeService.unlike(member, product);
 

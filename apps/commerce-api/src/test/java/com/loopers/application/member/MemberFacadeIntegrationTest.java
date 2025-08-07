@@ -1,9 +1,7 @@
 package com.loopers.application.member;
 
-import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberService;
 import com.loopers.domain.member.enums.Gender;
-import com.loopers.infrastructure.member.MemberJpaRepository;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
@@ -14,6 +12,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.context.jdbc.Sql;
+
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -31,9 +32,6 @@ class MemberFacadeIntegrationTest {
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
-
-    @Autowired
-    private MemberJpaRepository memberJpaRepository;
 
     @AfterEach
     void tearDown() {
@@ -63,11 +61,11 @@ class MemberFacadeIntegrationTest {
 
         @DisplayName("이미 가입된 ID 로 회원가입 시도 시, 실패한다.")
         @Test
+        @Sql(statements = {
+            "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
+        })
         void throwsException_whenUserIdAlreadyExists() {
-            String userId = "userA";
-            memberFacade.signUp(userId, Gender.MALE, "2000-01-01", "test@test.com");
-
-            CoreException exception = assertThrows(CoreException.class, () -> memberFacade.signUp(userId, Gender.MALE, "2000-01-01", "test@test.com"));
+            CoreException exception = assertThrows(CoreException.class, () -> memberFacade.signUp("testUser", Gender.MALE, "2024-01-01", "test@test.com"));
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
         }
     }
@@ -77,12 +75,13 @@ class MemberFacadeIntegrationTest {
     class GetMember {
         @DisplayName("해당 ID 의 회원이 존재할 경우, 회원 정보가 반환된다.")
         @Test
+        @Sql(statements = {
+            "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser', 'MALE', 'test@test.com', '2024-01-01', 0, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
+        })
         void returnMember_whenExistUserId() {
-            MemberModel existedMember = memberJpaRepository.save(new MemberModel("test", Gender.FEMALE, "2000-01-01", "test@test.com"));
+            MemberInfo target = memberFacade.getMember("testUser");
 
-            MemberInfo target = memberFacade.getMember(existedMember.getUserId());
-
-            assertThat(target).isEqualTo(MemberInfo.from(existedMember));
+            assertThat(target).isEqualTo(new MemberInfo(1L, "testUser", Gender.MALE, LocalDate.of(2024, 1, 1), "test@test.com", 0L));
         }
 
         @DisplayName("해당 ID 의 회원이 존재하지 않을 경우, null 이 반환된다.")

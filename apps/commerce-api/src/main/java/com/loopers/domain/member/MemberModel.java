@@ -4,10 +4,8 @@ import com.loopers.domain.BaseEntity;
 import com.loopers.domain.member.enums.Gender;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.Getter;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -16,16 +14,25 @@ import java.time.format.DateTimeParseException;
 @Table(name = "member")
 public class MemberModel extends BaseEntity {
 
+    @Getter
     private String userId;
 
     @Enumerated(EnumType.STRING)
+    @Getter
     private Gender gender;
 
+    @Getter
     private LocalDate birthdate;
 
+    @Getter
     private String email;
 
+    @Getter
     private Long points;
+
+    @Getter
+    @Version
+    private Long version;
 
     protected MemberModel() {
     }
@@ -68,26 +75,7 @@ public class MemberModel extends BaseEntity {
         this.birthdate = parsedBirthdate;
         this.email = email;
         this.points = points;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public Gender getGender() {
-        return gender;
-    }
-
-    public LocalDate getBirthdate() {
-        return birthdate;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public Long getPoints() {
-        return points;
+        this.version = null;
     }
 
     public Long chargePoints(Long amount) {

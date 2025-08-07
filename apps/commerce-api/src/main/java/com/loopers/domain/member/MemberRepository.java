@@ -8,4 +8,6 @@ public interface MemberRepository {
     MemberModel create(MemberModel member);
 
     MemberModel update(MemberModel member);
+
+    Optional<MemberModel> findWithLock(Long id);
 }

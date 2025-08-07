@@ -7,6 +7,8 @@ import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,12 +19,14 @@ public class LikeService {
 
     private final LikeRepository likeRepository;
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void like(MemberModel member, ProductModel product) {
         if (member == null || product == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "Member and Product cannot be null");
         }
 
         Optional<LikeModel> like = likeRepository.find(member.getId(), product.getId());
+
         if (like.isEmpty()) {
             likeRepository.save(new LikeModel(member.getId(), product.getId()));
         }
@@ -33,7 +37,7 @@ public class LikeService {
             throw new CoreException(ErrorType.BAD_REQUEST, "Member and Product cannot be null");
         }
 
-        Optional<LikeModel> like = likeRepository.find(member.getId(), product.getId());
+        Optional<LikeModel> like = likeRepository.findWithLock(member.getId(), product.getId());
         like.ifPresent(likeRepository::delete);
     }
 

@@ -18,4 +18,6 @@ public interface LikeRepository {
     List<LikeModel> search(MemberModel member, Pageable pageable);
 
     long countMemberLikedProducts(Long memberId);
+
+    Optional<LikeModel> findWithLock(Long memberId, Long productId);
 }

@@ -51,4 +51,14 @@ public class OrderRepositoryImpl implements OrderRepository {
             .fetchOne();
         return Optional.ofNullable(order);
     }
+
+    @Override
+    public List<OrdersModel> searchByCoupon(Long couponId) {
+        return queryFactory
+            .selectFrom(ordersModel)
+            .distinct()
+            .leftJoin(ordersModel.items, orderItemModel).fetchJoin()
+            .where(ordersModel.couponId.eq(couponId))
+            .fetch();
+    }
 }
