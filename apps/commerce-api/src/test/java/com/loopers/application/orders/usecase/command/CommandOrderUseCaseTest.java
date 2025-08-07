@@ -1,19 +1,24 @@
 package com.loopers.application.orders.usecase.command;
 
 import com.loopers.application.member.MemberInfo;
+import com.loopers.application.orders.usecase.command.CommandOrderUseCase.Command;
+import com.loopers.application.orders.usecase.command.CommandOrderUseCase.Result;
 import com.loopers.domain.coupon.CouponModel;
 import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberRepository;
+import com.loopers.domain.orders.ExternalServiceOutputPort;
 import com.loopers.domain.orders.OrderRepository;
 import com.loopers.domain.orders.OrdersModel;
 import com.loopers.domain.product.ProductModel;
 import com.loopers.domain.product.ProductRepository;
+import com.loopers.support.error.CoreException;
 import com.loopers.utils.DatabaseCleanUp;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
@@ -23,6 +28,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class CommandOrderUseCaseTest {
@@ -41,6 +49,9 @@ class CommandOrderUseCaseTest {
 
     @Autowired
     private CouponRepository couponRepository;
+
+    @MockitoBean
+    private ExternalServiceOutputPort deliveryClient;
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
@@ -75,7 +86,7 @@ class CommandOrderUseCaseTest {
             final int itemIndex = i % productIds.size();
             executor.submit(() -> {
                 try {
-                    commandOrderUseCase.execute(new CommandOrderUseCase.Command(memberInfo, List.of(productIds.get(itemIndex)), List.of(quantities.get(itemIndex)), null));
+                    commandOrderUseCase.execute(new Command(memberInfo, List.of(productIds.get(itemIndex)), List.of(quantities.get(itemIndex)), null));
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
@@ -124,7 +135,7 @@ class CommandOrderUseCaseTest {
             final int memberIndex = i % memberInfos.size();
             executor.submit(() -> {
                 try {
-                    commandOrderUseCase.execute(new CommandOrderUseCase.Command(memberInfos.get(memberIndex), productIds, quantities, null));
+                    commandOrderUseCase.execute(new Command(memberInfos.get(memberIndex), productIds, quantities, null));
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
@@ -166,7 +177,7 @@ class CommandOrderUseCaseTest {
         for (int i = 0; i < threadCount; i++) {
             executor.submit(() -> {
                 try {
-                    commandOrderUseCase.execute(new CommandOrderUseCase.Command(MemberInfo.from(member), productIds, quantities, couponId));
+                    commandOrderUseCase.execute(new Command(MemberInfo.from(member), productIds, quantities, couponId));
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
@@ -184,5 +195,118 @@ class CommandOrderUseCaseTest {
         assertThat(couponModel.getDeletedAt()).isNotNull();
         assertThat(orders.size()).isEqualTo(1);
         assertThat(successCount.get()).isEqualTo(1);
+    }
+
+    @Test
+    @Sql(statements = {
+        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '롤백테스트상품', 1000, 10, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'rollbackUser', 'MALE', 'rollback@test.com', '2024-01-01', 20000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
+    })
+    void 주문_처리_중_예외가_발생하면_모든_변경사항이_롤백되어야_한다() {
+        // given
+        MemberModel memberBefore = memberRepository.findByUserId("rollbackUser").orElseThrow();
+        ProductModel productBefore = productRepository.find(1L).orElseThrow();
+        Command command = new Command(MemberInfo.from(memberBefore), List.of(1L), List.of(1L), null);
+
+        doThrow(new RuntimeException("Delivery service failed")).when(deliveryClient).send(any(OrdersModel.class));
+
+        // when
+        assertThrows(CoreException.class, () -> {
+            commandOrderUseCase.execute(command);
+        });
+
+        // then
+        MemberModel memberAfter = memberRepository.findByUserId("rollbackUser").orElseThrow();
+        assertThat(memberAfter.getPoints()).isEqualTo(memberBefore.getPoints());
+
+        ProductModel productAfter = productRepository.find(1L).orElseThrow();
+        assertThat(productAfter.getStock().getQuantity()).isEqualTo(productBefore.getStock().getQuantity());
+
+        List<OrdersModel> orders = orderRepository.search(memberBefore.getId());
+        assertThat(orders).isEmpty();
+    }
+
+    @Test
+    @Sql(statements = {
+        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '테스트상품1', 1000, 15, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser1', 'MALE', 'test@test.com', '2024-01-01', 10000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)",
+        "insert into coupon (id, amount, rate, created_at, deleted_at, issued_at, member_id, code, discount_type, target_scope, version) values (1, 500, null, '2023-10-01 12:00:00', '2023-10-02 12:00:00', '2023-10-01 12:00:00', 1, 'USED_COUPON', 'FIXED_AMOUNT', 'ORDER', 0)"
+    })
+    void 사용할_수_없는_쿠폰으로_주문하면_실패해야_한다() {
+        // given
+        MemberModel member = memberRepository.findByUserId("testUser1").orElseThrow();
+        Command commandWithUsedCoupon = new Command(MemberInfo.from(member), List.of(1L), List.of(1L), 1L);
+        Command commandWithNonExistentCoupon = new Command(MemberInfo.from(member), List.of(1L), List.of(1L), 999L);
+
+        // when & then
+        assertThrows(CoreException.class, () -> {
+            commandOrderUseCase.execute(commandWithUsedCoupon);
+        });
+        assertThrows(CoreException.class, () -> {
+            commandOrderUseCase.execute(commandWithNonExistentCoupon);
+        });
+    }
+
+    @Test
+    @Sql(statements = {
+        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '재고부족상품', 1000, 1, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser1', 'MALE', 'test@test.com', '2024-01-01', 10000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
+    })
+    void 재고가_부족하면_주문은_실패해야_한다() {
+        // given
+        MemberModel member = memberRepository.findByUserId("testUser1").orElseThrow();
+        // 재고(1)보다 많은 수량(2)을 주문
+        Command command = new Command(MemberInfo.from(member), List.of(1L), List.of(2L), null);
+
+        // when & then
+        assertThrows(CoreException.class, () -> {
+            commandOrderUseCase.execute(command);
+        });
+    }
+
+    @Test
+    @Sql(statements = {
+        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '고가상품', 20000, 10, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser1', 'MALE', 'poor@test.com', '2024-01-01', 10000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
+    })
+    void 포인트가_부족하면_주문은_실패해야_한다() {
+        // given
+        MemberModel member = memberRepository.findByUserId("testUser1").orElseThrow();
+        // 보유 포인트(10000)보다 비싼 상품(20000) 주문
+        Command command = new Command(MemberInfo.from(member), List.of(1L), List.of(1L), null);
+
+        // when & then
+        assertThrows(CoreException.class, () -> {
+            commandOrderUseCase.execute(command);
+        });
+    }
+
+    @Test
+    @Sql(statements = {
+        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '성공테스트상품', 1000, 10, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
+        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'successUser', 'MALE', 'success@test.com', '2024-01-01', 10000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
+    })
+    void 주문에_성공하면_재고와_포인트가_정상적으로_차감되고_주문이_생성되어야_한다() {
+        // given
+        MemberModel member = memberRepository.findByUserId("successUser").orElseThrow();
+        Command command = new Command(MemberInfo.from(member), List.of(1L), List.of(2L), null);
+
+        // when
+        Result result = commandOrderUseCase.execute(command);
+
+        // then
+        // 주문 생성 확인
+        assertThat(result.orderInfo().id()).isNotNull();
+        OrdersModel order = orderRepository.find(result.orderInfo().id()).orElseThrow();
+        assertThat(order.getMemberId()).isEqualTo(member.getId());
+        assertThat(order.getItems()).hasSize(1);
+
+        // 재고 차감 확인
+        ProductModel productAfter = productRepository.find(1L).orElseThrow();
+        assertThat(productAfter.getStock().getQuantity()).isEqualTo(8L); // 10 - 2
+
+        // 포인트 차감 확인
+        MemberModel memberAfter = memberRepository.findByUserId("successUser").orElseThrow();
+        assertThat(memberAfter.getPoints()).isEqualTo(8000L); // 10000 - (1000 * 2)
     }
 }

@@ -86,7 +86,11 @@ public class CommandOrderUseCase {
         OrdersModel order = orderService.order(member, items, coupon != null ? coupon.getId() : null);
 
         // 주문 정보 전송
-        deliveryClient.send(order);
+        try {
+            deliveryClient.send(order);
+        } catch (Exception e) {
+            throw new CoreException(ErrorType.INTERNAL_ERROR, "Failed to process order: " + e.getMessage());
+        }
 
         return new Result(OrderInfo.from(order));
     }
