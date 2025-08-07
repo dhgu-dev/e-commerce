@@ -21,6 +21,9 @@ public class OrdersModel extends BaseEntity {
     @Getter
     private Long memberId;
 
+    @Getter
+    private Long couponId;
+
     @Embedded
     @AttributeOverride(name = "amount", column = @Column(name = "total_price"))
     @Getter
@@ -35,6 +38,10 @@ public class OrdersModel extends BaseEntity {
     private Set<OrderItemModel> items = new LinkedHashSet<>();
 
     public OrdersModel(Long memberId, Price totalPrice) {
+        this(memberId, totalPrice, null);
+    }
+
+    public OrdersModel(Long memberId, Price totalPrice, Long couponId) {
         if (memberId == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "Member ID cannot be null.");
         }
@@ -45,6 +52,7 @@ public class OrdersModel extends BaseEntity {
         this.memberId = memberId;
         this.totalPrice = totalPrice;
         this.status = OrderStatus.NOT_PAID;
+        this.couponId = couponId;
     }
 
     public void addItem(OrderItemModel item) {

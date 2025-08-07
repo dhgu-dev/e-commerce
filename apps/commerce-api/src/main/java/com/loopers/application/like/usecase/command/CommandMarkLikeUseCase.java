@@ -32,7 +32,7 @@ public class CommandMarkLikeUseCase {
 
         try {
             likeService.like(member, product);
-        } catch (DataIntegrityViolationException _) {
+        } catch (DataIntegrityViolationException e) {
         }
 
         productService.updateProductLikeCount(product, likeService.getLikeCount(product));

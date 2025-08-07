@@ -2,7 +2,10 @@ package com.loopers.application.orders.usecase.command;
 
 import com.loopers.application.member.MemberInfo;
 import com.loopers.application.orders.dto.OrderInfo;
+import com.loopers.domain.coupon.CouponModel;
+import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.member.MemberModel;
+import com.loopers.domain.member.MemberRepository;
 import com.loopers.domain.member.MemberService;
 import com.loopers.domain.orders.ExternalServiceOutputPort;
 import com.loopers.domain.orders.OrderService;
@@ -30,10 +33,28 @@ public class CommandOrderUseCase {
     private final OrderService orderService;
     private final ExternalServiceOutputPort deliveryClient;
     private final ProductRepository productRepository;
+    private final CouponRepository couponRepository;
+    private final MemberRepository memberRepository;
 
     @Transactional()
     public Result execute(Command command) {
-        MemberModel member = memberService.getMember(command.memberInfo().userId());
+        MemberModel member = memberRepository.findWithLock(command.memberInfo().id()).orElseThrow(
+            () -> new CoreException(ErrorType.NOT_FOUND, "Member not found with ID: " + command.memberInfo().id())
+        );
+
+        CouponModel coupon = null;
+        if (command.couponId() != null) {
+            coupon = couponRepository.find(command.couponId()).orElse(null);
+            if (coupon == null) {
+                throw new CoreException(ErrorType.NOT_FOUND, "Coupon not found with ID: " + command.couponId());
+            }
+            if (coupon.getDeletedAt() != null) {
+                throw new CoreException(ErrorType.BAD_REQUEST, "사용할 수 없는 쿠폰입니다.");
+            }
+            if (coupon.getIssuedAt() == null || !coupon.hasOwned(member.getId())) {
+                throw new CoreException(ErrorType.BAD_REQUEST, "사용할 수 없는 쿠폰입니다.");
+            }
+        }
 
         List<Pair<ProductModel, Long>> items = new ArrayList<>();
         BigDecimal totalPrice = BigDecimal.ZERO;
@@ -52,19 +73,29 @@ public class CommandOrderUseCase {
             totalPrice = totalPrice.add(product.getPrice().multiply(quantity).getAmount());
         }
 
+        // 쿠폰 사용
+        if (coupon != null) {
+            totalPrice = coupon.apply(totalPrice);
+            couponRepository.saveAndFlush(coupon);
+        }
+
         // 포인트 차감
         memberService.payment(member, totalPrice);
 
         // 주문 상품 정보 저장
-        OrdersModel order = orderService.order(member, items);
+        OrdersModel order = orderService.order(member, items, coupon != null ? coupon.getId() : null);
 
         // 주문 정보 전송
-        deliveryClient.send(order);
+        try {
+            deliveryClient.send(order);
+        } catch (Exception e) {
+            throw new CoreException(ErrorType.INTERNAL_ERROR, "Failed to process order: " + e.getMessage());
+        }
 
         return new Result(OrderInfo.from(order));
     }
 
-    public record Command(MemberInfo memberInfo, List<Long> productIds, List<Long> quantities) {
+    public record Command(MemberInfo memberInfo, List<Long> productIds, List<Long> quantities, Long couponId) {
     }
 
     public record Result(OrderInfo orderInfo) {
