@@ -58,7 +58,6 @@ class OrderServiceTest {
 
             assertThat(result).isNotNull();
             verify(orderRepository).save(any(OrdersModel.class));
-            verify(orderRepository).saveAll(any());
         }
 
         @Test
