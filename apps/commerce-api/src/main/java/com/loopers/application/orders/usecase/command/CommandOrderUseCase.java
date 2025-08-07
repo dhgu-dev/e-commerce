@@ -8,6 +8,7 @@ import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberRepository;
 import com.loopers.domain.member.MemberService;
 import com.loopers.domain.orders.ExternalServiceOutputPort;
+import com.loopers.domain.orders.OrderRepository;
 import com.loopers.domain.orders.OrderService;
 import com.loopers.domain.orders.OrdersModel;
 import com.loopers.domain.product.ProductModel;
@@ -35,6 +36,7 @@ public class CommandOrderUseCase {
     private final ProductRepository productRepository;
     private final CouponRepository couponRepository;
     private final MemberRepository memberRepository;
+    private final OrderRepository orderRepository;
 
     @Transactional()
     public Result execute(Command command) {
@@ -84,6 +86,8 @@ public class CommandOrderUseCase {
 
         // 주문 상품 정보 저장
         OrdersModel order = orderService.order(member, items, coupon != null ? coupon.getId() : null);
+        order.process();
+        OrdersModel result = orderRepository.save(order);
 
         // 주문 정보 전송
         try {
@@ -92,7 +96,7 @@ public class CommandOrderUseCase {
             throw new CoreException(ErrorType.INTERNAL_ERROR, "Failed to process order: " + e.getMessage());
         }
 
-        return new Result(OrderInfo.from(order));
+        return new Result(OrderInfo.from(result));
     }
 
     public record Command(MemberInfo memberInfo, List<Long> productIds, List<Long> quantities, Long couponId) {
