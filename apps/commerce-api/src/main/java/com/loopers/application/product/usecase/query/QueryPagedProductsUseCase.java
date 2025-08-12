@@ -63,7 +63,7 @@ public class QueryPagedProductsUseCase {
             .map(product -> ProductInfo.from(product, brand))
             .toList();
 
-        long totalCount = productService.countAll(ProductSearchConditionFactory.buildNoCondition());
+        long totalCount = productService.countAll(ProductSearchConditionFactory.buildBrandEqual(brand));
 
         return new Result(new PageImpl<>(products, query.pageRequest, totalCount));
     }
