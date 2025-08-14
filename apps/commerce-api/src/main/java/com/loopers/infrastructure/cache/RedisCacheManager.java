@@ -19,23 +19,27 @@ public class RedisCacheManager<T> implements CacheManager<T> {
     private final RedisTemplate<String, String> redisQueryTemplate;
     private final RedisTemplate<String, String> redisMasterTemplate;
     private final ObjectMapper objectMapper;
+    private final VersioningStrategy versioningStrategy;
 
     public RedisCacheManager(
         RedisTemplate<String, String> redisQueryTemplate,
         @Qualifier(RedisConfig.REDIS_TEMPLATE_MASTER) RedisTemplate<String, String> redisMasterTemplate,
-        ObjectMapper objectMapper
+        ObjectMapper objectMapper,
+        VersioningStrategy versioningStrategy
     ) {
         this.redisQueryTemplate = redisQueryTemplate;
         this.redisMasterTemplate = redisMasterTemplate;
         this.objectMapper = objectMapper;
+        this.versioningStrategy = versioningStrategy;
     }
 
     @Override
     public void save(String baseKey, T value, Class<T> type, long timeout, TimeUnit unit) {
         try {
+            String versionedKey = buildVersionedKey(baseKey, type);
             String json = objectMapper.writeValueAsString(value);
-            log.info("save key: {} value: {}", baseKey, json);
-            redisMasterTemplate.opsForValue().set(baseKey, json, timeout, unit);
+            log.info("save key: {} value: {}", versionedKey, json);
+            redisMasterTemplate.opsForValue().set(versionedKey, json, timeout, unit);
         } catch (Exception e) {
             throw new RuntimeException("Redis 저장 중 오류", e);
         }
@@ -44,9 +48,10 @@ public class RedisCacheManager<T> implements CacheManager<T> {
     @Override
     public Optional<T> find(String baseKey, Class<T> type) {
         try {
-            String json = redisQueryTemplate.opsForValue().get(baseKey);
-            log.info("find key: {} value: {}", baseKey, json);
+            String versionedKey = buildVersionedKey(baseKey, type);
+            String json = redisQueryTemplate.opsForValue().get(versionedKey);
             if (json == null) return Optional.empty();
+            log.info("find key: {} value: {}", versionedKey, json);
             return Optional.of(objectMapper.readValue(json, type));
         } catch (Exception e) {
             log.error("Redis 검색 중 오류: {}", e.getMessage(), e);
@@ -57,9 +62,10 @@ public class RedisCacheManager<T> implements CacheManager<T> {
     @Override
     public void save(String baseKey, T value, TypeReference<T> type, long timeout, TimeUnit unit) {
         try {
+            String versionedKey = buildVersionedKey(baseKey, type);
             String json = objectMapper.writeValueAsString(value);
-            log.info("save key: {} value: {}", baseKey, json);
-            redisMasterTemplate.opsForValue().set(baseKey, json, timeout, unit);
+            log.info("save key: {} value: {}", versionedKey, json);
+            redisMasterTemplate.opsForValue().set(versionedKey, json, timeout, unit);
         } catch (Exception e) {
             throw new RuntimeException("Redis 저장 중 오류", e);
         }
@@ -68,9 +74,10 @@ public class RedisCacheManager<T> implements CacheManager<T> {
     @Override
     public Optional<T> find(String baseKey, TypeReference<T> type) {
         try {
-            String json = redisQueryTemplate.opsForValue().get(baseKey);
-            log.info("find key: {} value: {}", baseKey, json);
+            String versionedKey = buildVersionedKey(baseKey, type);
+            String json = redisQueryTemplate.opsForValue().get(versionedKey);
             if (json == null) return Optional.empty();
+            log.info("find key: {} value: {}", versionedKey, json);
             return Optional.of(objectMapper.readValue(json, type));
         } catch (Exception e) {
             log.error("Redis 검색 중 오류: {}", e.getMessage(), e);
@@ -81,5 +88,15 @@ public class RedisCacheManager<T> implements CacheManager<T> {
     @Override
     public void delete(String key) {
         redisMasterTemplate.delete(key);
+    }
+
+    private String buildVersionedKey(String baseKey, Class<T> type) {
+        String version = versioningStrategy.getVersion(type);
+        return String.format("%s::%s", baseKey, version);
+    }
+
+    private String buildVersionedKey(String baseKey, TypeReference<T> type) {
+        String version = versioningStrategy.getVersion(type);
+        return String.format("%s::%s", baseKey, version);
     }
 }
