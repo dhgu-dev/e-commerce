@@ -9,7 +9,14 @@ import jakarta.persistence.*;
 import lombok.Getter;
 
 @Entity
-@Table(name = "product")
+@Table(name = "product", indexes = {
+    @Index(name = "idx__product__brand_id__like_count", columnList = "brand_id, like_count"),
+    @Index(name = "idx__product__brand_id__price", columnList = "brand_id, price"),
+    @Index(name = "idx__product__brand_id__created_at", columnList = "brand_id, created_at"),
+    @Index(name = "idx__product__like_count", columnList = "like_count"),
+    @Index(name = "idx__product__price", columnList = "price"),
+    @Index(name = "idx__product__created_at", columnList = "created_at"),
+})
 public class ProductModel extends BaseEntity {
 
     @Getter
