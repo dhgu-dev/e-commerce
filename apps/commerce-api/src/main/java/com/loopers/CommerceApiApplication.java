@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 
 import java.util.TimeZone;
@@ -13,6 +14,7 @@ import static org.springframework.data.web.config.EnableSpringDataWebSupport.Pag
 @ConfigurationPropertiesScan
 @SpringBootApplication
 @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
+@EnableFeignClients
 public class CommerceApiApplication {
 
     public static void main(String[] args) {

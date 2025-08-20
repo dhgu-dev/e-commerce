@@ -29,6 +29,39 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 2000
+        readTimeout: 5000
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        failure-rate-threshold: 50 # 실패율 50% 초과 시 오픈
+        slow-call-rate-threshold: 50 # 느린 호출 비율 50% 초과 시 오픈
+        slow-call-duration-threshold: 500 # 500ms 이상 응답을 느린 호출로 간주
+        permitted-number-of-calls-in-half-open-state: 1 # half-open 상태에서 허용되는 호출 수
+        max-wait-duration-in-half-open-state: 500 # half-open 상태에서 최대 대기 시간 500ms
+        sliding-window-type: time_based
+        sliding-window-size: 10 # 최근 10개 호출을 기준으로 실패율 계산
+        minimum-number-of-calls: 2 # 최소 2개 호출이 있어야 서킷브레이커 동작
+        wait-duration-in-open-state: 1000 # 오픈 상태에서 1초 후 half-open 상태로 전환
+        event-consumer-buffer-size: 1
+        register-health-indicator: true
+        record-exceptions:
+          - java.lang.Throwable
+  retry:
+    instances:
+      pgService:
+        max-attempts: 1
+        wait-duration: 1000
+        retry-exceptions:
+          - feign.RetryableException
+          - java.net.SocketTimeoutException
+
 ---
 spring:
   config:
