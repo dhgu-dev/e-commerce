@@ -2,6 +2,7 @@ package com.loopers.infrastructure.member;
 
 import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberRepository;
+import com.loopers.domain.payment.PointManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -9,7 +10,7 @@ import java.util.Optional;
 
 @RequiredArgsConstructor
 @Repository
-public class MemberRepositoryImpl implements MemberRepository {
+public class MemberRepositoryImpl implements MemberRepository, PointManager {
     private final MemberJpaRepository memberJpaRepository;
 
     @Override
@@ -30,5 +31,10 @@ public class MemberRepositoryImpl implements MemberRepository {
     @Override
     public Optional<MemberModel> findWithLock(Long id) {
         return memberJpaRepository.findWithLock(id);
+    }
+
+    @Override
+    public void updateMemberPoints(MemberModel member) {
+        memberJpaRepository.updateMemberPoints(member.getId(), member.getPoints());
     }
 }

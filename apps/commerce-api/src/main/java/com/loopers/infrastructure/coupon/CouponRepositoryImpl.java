@@ -2,6 +2,7 @@ package com.loopers.infrastructure.coupon;
 
 import com.loopers.domain.coupon.CouponModel;
 import com.loopers.domain.coupon.CouponRepository;
+import com.loopers.domain.orders.OrderCouponManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -9,7 +10,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class CouponRepositoryImpl implements CouponRepository {
+public class CouponRepositoryImpl implements CouponRepository, OrderCouponManager {
 
     private final CouponJpaRepository couponJpaRepository;
 
@@ -22,4 +23,5 @@ public class CouponRepositoryImpl implements CouponRepository {
     public void saveAndFlush(CouponModel couponModel) {
         couponJpaRepository.saveAndFlush(couponModel);
     }
+    
 }

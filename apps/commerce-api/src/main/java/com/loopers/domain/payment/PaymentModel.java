@@ -4,19 +4,26 @@ import com.loopers.domain.BaseEntity;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "payment")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PaymentModel extends BaseEntity {
     @Column(name = "transaction_key", nullable = false, unique = true)
+    @Getter
     String transactionKey;
 
     @Column(name = "user_id", nullable = false)
+    @Getter
     String userId;
 
     @Column(name = "order_id", nullable = false)
+    @Getter
     String orderId;
 
     @Enumerated(EnumType.STRING)
@@ -35,15 +42,17 @@ public class PaymentModel extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
+    @Getter
     TransactionStatus status = TransactionStatus.PENDING;
 
     @Column(name = "reason")
     String reason = null;
 
-    public PaymentModel(
+    private PaymentModel(
         String transactionKey,
         String userId,
         String orderId,
+        PaymentType paymentType,
         CardType cardType,
         String cardNo,
         BigDecimal amount,
@@ -53,7 +62,7 @@ public class PaymentModel extends BaseEntity {
         this.transactionKey = transactionKey;
         this.userId = userId;
         this.orderId = orderId;
-        this.paymentType = PaymentType.CARD;
+        this.paymentType = paymentType;
         this.cardType = cardType;
         this.cardNo = cardNo;
         this.amount = amount;
@@ -61,46 +70,59 @@ public class PaymentModel extends BaseEntity {
         this.reason = reason;
     }
 
-    public PaymentModel(
+    public static PaymentModel createCardPayment(
         String transactionKey,
         String userId,
         String orderId,
-        BigDecimal amount,
-        TransactionStatus status,
-        String reason
+        CardType cardType,
+        String cardNo,
+        BigDecimal amount
     ) {
-        this.transactionKey = transactionKey;
-        this.userId = userId;
-        this.orderId = orderId;
-        this.paymentType = PaymentType.POINTS;
-        this.cardType = null;
-        this.cardNo = null;
-        this.amount = amount;
-        this.status = status;
-        this.reason = reason;
+        return new PaymentModel(
+            transactionKey,
+            userId,
+            orderId,
+            PaymentType.CARD,
+            cardType,
+            cardNo,
+            amount,
+            TransactionStatus.PENDING,
+            null
+        );
     }
 
-    void approve() {
+    public static PaymentModel createPointPayment(
+        String transactionKey,
+        String userId,
+        String orderId,
+        BigDecimal amount
+    ) {
+        return new PaymentModel(
+            transactionKey,
+            userId,
+            orderId,
+            PaymentType.POINTS,
+            null,
+            null,
+            amount,
+            TransactionStatus.PENDING,
+            null
+        );
+    }
+
+    public void approve() {
         if (status != TransactionStatus.PENDING) {
             throw new CoreException(ErrorType.INTERNAL_ERROR, "결제승인은 대기상태에서만 가능합니다.");
         }
-        status = TransactionStatus.SUCCESS;
-        reason = "정상 승인되었습니다.";
+        this.status = TransactionStatus.SUCCESS;
+        this.reason = "정상 승인되었습니다.";
     }
 
-    void invalidCard() {
+    public void failed(String reason) {
         if (status != TransactionStatus.PENDING) {
-            throw new CoreException(ErrorType.INTERNAL_ERROR, "결제처리는 대기상태에서만 가능합니다.");
+            throw new CoreException(ErrorType.INTERNAL_ERROR, "결제실패는 대기상태에서만 가능합니다.");
         }
-        status = TransactionStatus.FAILED;
-        reason = "잘못된 카드입니다. 다른 카드를 선택해주세요.";
-    }
-
-    void limitExceeded() {
-        if (status != TransactionStatus.PENDING) {
-            throw new CoreException(ErrorType.INTERNAL_ERROR, "한도초과 처리는 대기상태에서만 가능합니다.");
-        }
-        status = TransactionStatus.FAILED;
-        reason = "한도초과입니다. 다른 카드를 선택해주세요.";
+        this.status = TransactionStatus.FAILED;
+        this.reason = reason != null ? reason : "결제에 실패했습니다. 다시 시도해주세요.";
     }
 }

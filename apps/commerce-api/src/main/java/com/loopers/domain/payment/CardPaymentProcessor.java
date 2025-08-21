@@ -18,19 +18,15 @@ public class CardPaymentProcessor implements PaymentProcessor<CardPaymentRequest
     @Override
     public PaymentModel pay(CardPaymentRequest request) {
         var result = pgProvider.requestTransaction(request);
-        if (result.status() != TransactionStatus.SUCCESS) {
-            throw new IllegalStateException(result.reason());
-        }
+        System.out.println("CardPaymentProcessor.pay() - result: " + result);
 
-        PaymentModel paymentModel = new PaymentModel(
+        PaymentModel paymentModel = PaymentModel.createCardPayment(
             result.transactionKey(),
-            request.getMemberId(),
-            request.getOrderId(),
+            request.getMember().getUserId(),
+            request.getOrder().getId().toString(),
             request.getCardType(),
             request.getCardNo(),
-            request.getAmount(),
-            result.status(),
-            result.reason()
+            request.getAmount()
         );
         return paymentRepository.save(paymentModel);
     }
