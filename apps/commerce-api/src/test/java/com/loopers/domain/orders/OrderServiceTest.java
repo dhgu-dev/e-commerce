@@ -54,7 +54,7 @@ class OrderServiceTest {
 
             when(orderRepository.save(any(OrdersModel.class))).thenReturn(order);
 
-            OrdersModel result = orderService.order(member, products, null);
+            OrdersModel result = orderService.order(member, products, null, Price.of(new BigDecimal("2000")));
 
             assertThat(result).isNotNull();
             verify(orderRepository).save(any(OrdersModel.class));
@@ -64,7 +64,7 @@ class OrderServiceTest {
         @DisplayName("member가 null이면 BAD_REQUEST 예외 발생")
         void order_memberNull_throwsException() {
             List<Pair<ProductModel, Long>> products = List.of();
-            CoreException ex = assertThrows(CoreException.class, () -> orderService.order(null, products, null));
+            CoreException ex = assertThrows(CoreException.class, () -> orderService.order(null, products, null, Price.of(new BigDecimal("1000"))));
             assertThat(ex.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
 
@@ -72,7 +72,7 @@ class OrderServiceTest {
         @DisplayName("products가 null이면 BAD_REQUEST 예외 발생")
         void order_productsNull_throwsException() {
             MemberModel member = new MemberModel("user1", Gender.FEMALE, "2000-01-01", "test@test.com", 1000L);
-            CoreException ex = assertThrows(CoreException.class, () -> orderService.order(member, null, null));
+            CoreException ex = assertThrows(CoreException.class, () -> orderService.order(member, null, null, Price.of(new BigDecimal("2000"))));
             assertThat(ex.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
 
@@ -80,7 +80,7 @@ class OrderServiceTest {
         @DisplayName("products가 비어있으면 BAD_REQUEST 예외 발생")
         void order_productsEmpty_throwsException() {
             MemberModel member = new MemberModel("user1", Gender.FEMALE, "2000-01-01", "test@test.com", 1000L);
-            CoreException ex = assertThrows(CoreException.class, () -> orderService.order(member, Collections.emptyList(), null));
+            CoreException ex = assertThrows(CoreException.class, () -> orderService.order(member, Collections.emptyList(), null, Price.of(new BigDecimal("2000"))));
             assertThat(ex.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
 
@@ -92,7 +92,7 @@ class OrderServiceTest {
             ProductModel product = new ProductModel("p1", com.loopers.domain.product.vo.Price.ZERO, Stock.of(1568), 369L);
             ReflectionTestUtils.setField(product, "id", 123L);
             List<Pair<ProductModel, Long>> products = List.of(Pair.of(product, 0L));
-            CoreException ex = assertThrows(CoreException.class, () -> orderService.order(member, products, null));
+            CoreException ex = assertThrows(CoreException.class, () -> orderService.order(member, products, null, Price.of(new BigDecimal("2000"))));
             assertThat(ex.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
         }
     }

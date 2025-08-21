@@ -5,6 +5,8 @@ import com.loopers.application.member.MemberInfo;
 import com.loopers.application.orders.usecase.command.CommandOrderUseCase;
 import com.loopers.application.orders.usecase.query.QueryMemberOrdersUseCase;
 import com.loopers.application.orders.usecase.query.QueryOrderDetailUseCase;
+import com.loopers.application.payment.PaymentFacade;
+import com.loopers.application.payment.dto.PaymentOrder;
 import com.loopers.interfaces.api.ApiResponse;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
@@ -22,6 +24,7 @@ public class OrderV1Controller implements OrderV1ApiSpec {
     private final CommandOrderUseCase commandOrderUseCase;
     private final QueryMemberOrdersUseCase queryMemberOrdersUseCase;
     private final QueryOrderDetailUseCase queryOrderDetailUseCase;
+    private final PaymentFacade paymentFacade;
 
     @Override
     @PostMapping()
@@ -51,11 +54,23 @@ public class OrderV1Controller implements OrderV1ApiSpec {
                 memberInfo,
                 productIds,
                 quantities,
-                dto.couponId()
+                dto.couponId(),
+                dto.card() != null ? dto.card().toInfo() : null
             )
         );
 
-        return ApiResponse.success(OrderV1Dto.OrderResponse.from(result.orderInfo()));
+        var payment = paymentFacade.requestPayment(
+            new PaymentOrder(
+                dto.card() != null ? PaymentOrder.PaymentMethod.CARD : PaymentOrder.PaymentMethod.POINTS,
+                userId,
+                result.orderInfo().id(),
+                result.orderInfo().totalPrice(),
+                dto.card() != null ? dto.card().cardType().toInfo() : null,
+                dto.card() != null ? dto.card().cardNumber() : null
+            )
+        );
+
+        return ApiResponse.success(OrderV1Dto.OrderResponse.from(result.orderInfo(), payment));
     }
 
     @Override
