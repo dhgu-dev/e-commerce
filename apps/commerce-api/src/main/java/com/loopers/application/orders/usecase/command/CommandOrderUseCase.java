@@ -1,6 +1,7 @@
 package com.loopers.application.orders.usecase.command;
 
 import com.loopers.application.member.MemberInfo;
+import com.loopers.application.orders.dto.CardInfo;
 import com.loopers.application.orders.dto.OrderInfo;
 import com.loopers.domain.coupon.CouponModel;
 import com.loopers.domain.coupon.CouponRepository;
@@ -11,6 +12,9 @@ import com.loopers.domain.orders.ExternalServiceOutputPort;
 import com.loopers.domain.orders.OrderRepository;
 import com.loopers.domain.orders.OrderService;
 import com.loopers.domain.orders.OrdersModel;
+import com.loopers.domain.orders.vo.Price;
+import com.loopers.domain.payment.CardPaymentRequest;
+import com.loopers.domain.payment.PaymentProcessor;
 import com.loopers.domain.product.ProductModel;
 import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductService;
@@ -37,6 +41,7 @@ public class CommandOrderUseCase {
     private final CouponRepository couponRepository;
     private final MemberRepository memberRepository;
     private final OrderRepository orderRepository;
+    private final PaymentProcessor<CardPaymentRequest> cardPaymentProcessor;
 
     @Transactional()
     public Result execute(Command command) {
@@ -61,7 +66,7 @@ public class CommandOrderUseCase {
         List<Pair<ProductModel, Long>> items = new ArrayList<>();
         BigDecimal totalPrice = BigDecimal.ZERO;
 
-        // 각 주문 상품 재고 차감 및 가격 합산
+        // 각 주문 상품 가격 합산
         for (int i = 0; i < command.productIds().size(); i++) {
             Long productId = command.productIds().get(i);
             long quantity = command.quantities().get(i);
@@ -69,9 +74,8 @@ public class CommandOrderUseCase {
             ProductModel product = productRepository.findWithLock(productId).orElseThrow(
                 () -> new CoreException(ErrorType.NOT_FOUND, "Product not found with ID: " + productId)
             );
-            productService.decreaseStock(product, quantity);
-            items.add(Pair.of(product, quantity));
 
+            items.add(Pair.of(product, quantity));
             totalPrice = totalPrice.add(product.getPrice().multiply(quantity).getAmount());
         }
 
@@ -81,25 +85,24 @@ public class CommandOrderUseCase {
             couponRepository.saveAndFlush(coupon);
         }
 
-        // 포인트 차감
-        memberService.payment(member, totalPrice);
+        // 재고 차감
+        for (int i = 0; i < items.size(); i++) {
+            ProductModel product = items.get(i).getFirst();
+            long quantity = items.get(i).getSecond();
 
-        // 주문 상품 정보 저장
-        OrdersModel order = orderService.order(member, items, coupon != null ? coupon.getId() : null);
-        order.process();
-        OrdersModel result = orderRepository.save(order);
-
-        // 주문 정보 전송
-        try {
-            deliveryClient.send(order);
-        } catch (Exception e) {
-            throw new CoreException(ErrorType.INTERNAL_ERROR, "Failed to process order: " + e.getMessage());
+            productService.decreaseStock(product, quantity);
         }
 
-        return new Result(OrderInfo.from(result));
+        // 주문 정보 생성
+        OrdersModel order = orderService.order(member, items, coupon != null ? coupon.getId() : null, Price.of(totalPrice));
+
+        return new Result(OrderInfo.from(order));
     }
 
-    public record Command(MemberInfo memberInfo, List<Long> productIds, List<Long> quantities, Long couponId) {
+    public record Command(MemberInfo memberInfo, List<Long> productIds, List<Long> quantities, Long couponId, CardInfo cardInfo) {
+        public Command(MemberInfo memberInfo, List<Long> productIds, List<Long> quantities, Long couponId) {
+            this(memberInfo, productIds, quantities, couponId, null);
+        }
     }
 
     public record Result(OrderInfo orderInfo) {

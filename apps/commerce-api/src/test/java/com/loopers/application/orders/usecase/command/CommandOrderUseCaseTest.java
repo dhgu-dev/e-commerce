@@ -29,8 +29,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class CommandOrderUseCaseTest {
@@ -59,49 +57,6 @@ class CommandOrderUseCaseTest {
     @AfterEach
     void tearDown() {
         databaseCleanUp.truncateAllTables();
-    }
-
-    @Test
-    @Sql(statements = {
-        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '테스트상품1', 1000, 15, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
-        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (2, '테스트상품2', 2000, 10, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
-        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (3, '테스트상품3', 3000, 5, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
-        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (4, '테스트상품4', 4000, 5, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
-        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (5, '테스트상품5', 5000, 5, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
-        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser', 'MALE', 'test@test.com', '2024-01-01', 20000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
-    })
-    void 동일한_유저가_서로_다른_주문을_동시에_수행해도_포인트가_정상적으로_차감되어야_한다() throws InterruptedException {
-        final int threadCount = 5;
-        MemberInfo memberInfo = MemberInfo.from(memberRepository.findByUserId("testUser").orElseThrow());
-        List<Long> productIds = List.of(1L, 2L, 3L, 4L, 5L);
-        List<Long> quantities = List.of(1L, 1L, 1L, 1L, 1L);
-
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        CountDownLatch latch = new CountDownLatch(threadCount);
-
-        AtomicInteger successCount = new AtomicInteger();
-        AtomicInteger failureCount = new AtomicInteger();
-
-        for (int i = 0; i < threadCount; i++) {
-            final int itemIndex = i % productIds.size();
-            executor.submit(() -> {
-                try {
-                    commandOrderUseCase.execute(new Command(memberInfo, List.of(productIds.get(itemIndex)), List.of(quantities.get(itemIndex)), null));
-                    successCount.incrementAndGet();
-                } catch (Exception e) {
-                    failureCount.incrementAndGet();
-                } finally {
-                    latch.countDown();
-                }
-            });
-        }
-
-        latch.await();
-
-        MemberModel member = memberRepository.findByUserId("testUser").orElseThrow();
-
-        assertThat(successCount.get()).isEqualTo(threadCount);
-        assertThat(member.getPoints()).isEqualTo(5000L);
     }
 
     @Test
@@ -199,35 +154,6 @@ class CommandOrderUseCaseTest {
 
     @Test
     @Sql(statements = {
-        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '롤백테스트상품', 1000, 10, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
-        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'rollbackUser', 'MALE', 'rollback@test.com', '2024-01-01', 20000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
-    })
-    void 주문_처리_중_예외가_발생하면_모든_변경사항이_롤백되어야_한다() {
-        // given
-        MemberModel memberBefore = memberRepository.findByUserId("rollbackUser").orElseThrow();
-        ProductModel productBefore = productRepository.find(1L).orElseThrow();
-        Command command = new Command(MemberInfo.from(memberBefore), List.of(1L), List.of(1L), null);
-
-        doThrow(new RuntimeException("Delivery service failed")).when(deliveryClient).send(any(OrdersModel.class));
-
-        // when
-        assertThrows(CoreException.class, () -> {
-            commandOrderUseCase.execute(command);
-        });
-
-        // then
-        MemberModel memberAfter = memberRepository.findByUserId("rollbackUser").orElseThrow();
-        assertThat(memberAfter.getPoints()).isEqualTo(memberBefore.getPoints());
-
-        ProductModel productAfter = productRepository.find(1L).orElseThrow();
-        assertThat(productAfter.getStock().getQuantity()).isEqualTo(productBefore.getStock().getQuantity());
-
-        List<OrdersModel> orders = orderRepository.search(memberBefore.getId());
-        assertThat(orders).isEmpty();
-    }
-
-    @Test
-    @Sql(statements = {
         "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '테스트상품1', 1000, 15, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
         "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser1', 'MALE', 'test@test.com', '2024-01-01', 10000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)",
         "insert into coupon (id, amount, rate, created_at, deleted_at, issued_at, member_id, code, discount_type, target_scope, version) values (1, 500, null, '2023-10-01 12:00:00', '2023-10-02 12:00:00', '2023-10-01 12:00:00', 1, 'USED_COUPON', 'FIXED_AMOUNT', 'ORDER', 0)"
@@ -266,30 +192,13 @@ class CommandOrderUseCaseTest {
 
     @Test
     @Sql(statements = {
-        "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '고가상품', 20000, 10, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
-        "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'testUser1', 'MALE', 'poor@test.com', '2024-01-01', 10000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
-    })
-    void 포인트가_부족하면_주문은_실패해야_한다() {
-        // given
-        MemberModel member = memberRepository.findByUserId("testUser1").orElseThrow();
-        // 보유 포인트(10000)보다 비싼 상품(20000) 주문
-        Command command = new Command(MemberInfo.from(member), List.of(1L), List.of(1L), null);
-
-        // when & then
-        assertThrows(CoreException.class, () -> {
-            commandOrderUseCase.execute(command);
-        });
-    }
-
-    @Test
-    @Sql(statements = {
         "INSERT INTO product (id, name, price, stock, brand_id, like_count, created_at, updated_at, deleted_at) VALUES (1, '성공테스트상품', 1000, 10, 1, 10, '2023-10-01 00:00:00', '2023-10-01 00:00:00', NULL)",
         "INSERT INTO member (id, user_id, gender, email, birthdate, points, created_at, updated_at, deleted_at, version) VALUES (1, 'successUser', 'MALE', 'success@test.com', '2024-01-01', 10000, '2023-10-03 00:00:00', '2023-10-03 00:00:00', NULL, 0)"
     })
-    void 주문에_성공하면_재고와_포인트가_정상적으로_차감되고_주문이_생성되어야_한다() {
+    void 주문에_성공하면_재고가_정상적으로_차감되고_주문이_생성되어야_한다() {
         // given
         MemberModel member = memberRepository.findByUserId("successUser").orElseThrow();
-        Command command = new Command(MemberInfo.from(member), List.of(1L), List.of(2L), null);
+        Command command = new Command(MemberInfo.from(member), List.of(1L), List.of(2L), null, null);
 
         // when
         Result result = commandOrderUseCase.execute(command);
@@ -304,9 +213,5 @@ class CommandOrderUseCaseTest {
         // 재고 차감 확인
         ProductModel productAfter = productRepository.find(1L).orElseThrow();
         assertThat(productAfter.getStock().getQuantity()).isEqualTo(8L); // 10 - 2
-
-        // 포인트 차감 확인
-        MemberModel memberAfter = memberRepository.findByUserId("successUser").orElseThrow();
-        assertThat(memberAfter.getPoints()).isEqualTo(8000L); // 10000 - (1000 * 2)
     }
 }

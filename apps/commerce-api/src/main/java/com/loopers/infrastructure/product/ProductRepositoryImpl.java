@@ -1,5 +1,7 @@
 package com.loopers.infrastructure.product;
 
+import com.loopers.domain.orders.OrderItemModel;
+import com.loopers.domain.orders.ProductStockManager;
 import com.loopers.domain.product.ProductModel;
 import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.enums.OrderBy;
@@ -17,16 +19,14 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.loopers.domain.product.QProductModel.productModel;
 
 @Repository
 @RequiredArgsConstructor
-public class ProductRepositoryImpl implements ProductRepository {
+public class ProductRepositoryImpl implements ProductRepository, ProductStockManager {
 
     private final ProductJpaRepository productJpaRepository;
     private final JPAQueryFactory queryFactory;
@@ -113,5 +113,27 @@ public class ProductRepositoryImpl implements ProductRepository {
             .setLockMode(LockModeType.PESSIMISTIC_WRITE)
             .fetchOne()
         );
+    }
+
+    @Override
+    public void restoreAllStock(Set<OrderItemModel> items) {
+        Map<Long, Long> products = items.stream().map(item -> Pair.of(item.getProductSnapshot().getProductId(), item.getQuantity()))
+            .collect(Collectors.groupingBy(Pair::getFirst, Collectors.summingLong(Pair::getSecond)));
+
+        List<ProductModel> restoredProducts = new ArrayList<>();
+        for (Map.Entry<Long, Long> entry : products.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .toList()
+        ) {
+            Long productId = entry.getKey();
+            Long restoreQuantity = entry.getValue();
+
+            ProductModel product = findWithLock(productId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "Product not found: " + productId));
+
+            product.restoreStock(restoreQuantity);
+            restoredProducts.add(product);
+        }
+        productJpaRepository.saveAll(restoredProducts);
     }
 }
