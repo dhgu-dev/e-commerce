@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,7 +34,7 @@ public class PaymentRepositoryImpl implements PaymentRepository {
     }
 
     @Override
-    public List<PaymentModel> findAllPendingOlderThan(TransactionStatus status, LocalDateTime threshold) {
+    public List<PaymentModel> findAllPendingOlderThan(TransactionStatus status, ZonedDateTime threshold) {
         return paymentJpaRepository.findAllPendingOlderThan(status, threshold);
     }
 }

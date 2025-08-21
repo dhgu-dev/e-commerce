@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +18,6 @@ public interface PaymentJpaRepository extends JpaRepository<PaymentModel, Long> 
     @Query("SELECT p FROM PaymentModel p WHERE p.status = :status AND p.createdAt <= :threshold")
     List<PaymentModel> findAllPendingOlderThan(
         @Param("status") TransactionStatus status,
-        @Param("threshold") LocalDateTime threshold
+        @Param("threshold") ZonedDateTime threshold
     );
 }

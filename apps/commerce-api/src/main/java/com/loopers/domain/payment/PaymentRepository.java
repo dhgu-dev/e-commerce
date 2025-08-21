@@ -1,6 +1,6 @@
 package com.loopers.domain.payment;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,5 +11,5 @@ public interface PaymentRepository {
 
     List<PaymentModel> findAllByOrderId(String orderId);
 
-    List<PaymentModel> findAllPendingOlderThan(TransactionStatus status, LocalDateTime threshold);
+    List<PaymentModel> findAllPendingOlderThan(TransactionStatus status, ZonedDateTime threshold);
 }
