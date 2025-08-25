@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Component
@@ -19,14 +18,14 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
 
-    public OrdersModel order(MemberModel member, List<Pair<ProductModel, Long>> products, Long couponId) {
+    public OrdersModel order(MemberModel member, List<Pair<ProductModel, Long>> products, Long couponId, Price totalPrice) {
         if (member == null || products == null || products.isEmpty()) {
             throw new CoreException(ErrorType.BAD_REQUEST, "Member and Products cannot be null or empty.");
         }
 
-        Price totalPrice = Price.of(products.stream()
-            .map(pair -> pair.getFirst().getPrice().multiply(pair.getSecond()).getAmount())
-            .reduce(BigDecimal.ZERO, BigDecimal::add));
+//        Price totalPrice = Price.of(products.stream()
+//            .map(pair -> pair.getFirst().getPrice().multiply(pair.getSecond()).getAmount())
+//            .reduce(BigDecimal.ZERO, BigDecimal::add));
 
         OrdersModel order = new OrdersModel(member.getId(), totalPrice, couponId);
         OrdersModel savedOrder = orderRepository.save(order);

@@ -72,4 +72,8 @@ public class ProductModel extends BaseEntity {
         }
         this.likeCount = likeCount;
     }
+
+    public void restoreStock(long quantity) {
+        this.stock = this.stock.restore(quantity);
+    }
 }

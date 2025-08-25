@@ -40,6 +40,13 @@ public class Stock implements Serializable {
         return new Stock(this.quantity - quantity);
     }
 
+    public Stock restore(long quantity) {
+        if (quantity < 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "복구할 재고 수량은 음수일 수 없습니다.");
+        }
+        return new Stock(this.quantity + quantity);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;

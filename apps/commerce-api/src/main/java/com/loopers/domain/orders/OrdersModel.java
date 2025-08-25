@@ -66,4 +66,11 @@ public class OrdersModel extends BaseEntity {
         }
         this.status = OrderStatus.PAID;
     }
+
+    public void cancel() {
+        if (this.status != OrderStatus.NOT_PAID) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "Invalid order status");
+        }
+        this.status = OrderStatus.CANCELED;
+    }
 }
