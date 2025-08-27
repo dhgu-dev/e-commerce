@@ -7,7 +7,7 @@ import com.loopers.domain.coupon.CouponModel;
 import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberRepository;
-import com.loopers.domain.orders.ExternalServiceOutputPort;
+import com.loopers.domain.orders.DataPlatformServiceOutputPort;
 import com.loopers.domain.orders.OrderRepository;
 import com.loopers.domain.orders.OrdersModel;
 import com.loopers.domain.product.ProductModel;
@@ -49,7 +49,7 @@ class CommandOrderUseCaseTest {
     private CouponRepository couponRepository;
 
     @MockitoBean
-    private ExternalServiceOutputPort deliveryClient;
+    private DataPlatformServiceOutputPort deliveryClient;
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;

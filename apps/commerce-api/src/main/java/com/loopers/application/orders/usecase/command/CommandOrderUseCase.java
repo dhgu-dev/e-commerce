@@ -31,7 +31,7 @@ public class CommandOrderUseCase {
     private final MemberService memberService;
     private final ProductService productService;
     private final OrderService orderService;
-    private final ExternalServiceOutputPort deliveryClient;
+    private final DataPlatformServiceOutputPort deliveryClient;
     private final ProductRepository productRepository;
     private final CouponRepository couponRepository;
     private final MemberRepository memberRepository;
