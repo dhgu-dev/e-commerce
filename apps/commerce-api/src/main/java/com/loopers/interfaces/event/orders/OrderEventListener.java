@@ -26,16 +26,4 @@ public class OrderEventListener {
         coupon.consume();
         couponRepository.saveAndFlush(coupon);
     }
-
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handle(OrderEvent.OrderCancelledEvent event) {
-        if (event.couponId() == null) {
-            return;
-        }
-
-        CouponModel coupon = couponRepository.find(event.couponId()).orElseThrow();
-        coupon.restore();
-        couponRepository.saveAndFlush(coupon);
-    }
 }

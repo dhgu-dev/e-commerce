@@ -15,9 +15,5 @@ public class OrderCoreEventPublisher implements OrderEventPublisher {
     public void publish(OrderEvent.OrderCreatedEvent event) {
         applicationEventPublisher.publishEvent(event);
     }
-
-    @Override
-    public void publish(OrderEvent.OrderCancelledEvent event) {
-        applicationEventPublisher.publishEvent(event);
-    }
+    
 }

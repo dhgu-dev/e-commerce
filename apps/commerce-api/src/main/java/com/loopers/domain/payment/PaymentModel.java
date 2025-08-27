@@ -38,6 +38,7 @@ public class PaymentModel extends BaseEntity {
     String cardNo;
 
     @Column(name = "amount", nullable = false)
+    @Getter
     BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
