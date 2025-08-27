@@ -1,6 +1,8 @@
 package com.loopers.application.like.usecase.command;
 
 import com.loopers.application.member.MemberInfo;
+import com.loopers.domain.like.LikeEvent;
+import com.loopers.domain.like.LikeEventPublisher;
 import com.loopers.domain.like.LikeService;
 import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberService;
@@ -20,6 +22,7 @@ public class CommandMarkLikeUseCase {
     private final MemberService memberService;
     private final ProductService productService;
     private final LikeService likeService;
+    private final LikeEventPublisher likeEventPublisher;
 
     @Transactional
     public void execute(Command command) {
@@ -35,7 +38,7 @@ public class CommandMarkLikeUseCase {
         } catch (DataIntegrityViolationException e) {
         }
 
-        productService.updateProductLikeCount(product, likeService.getLikeCount(product));
+        likeEventPublisher.publish(new LikeEvent.LikeMarkedEvent(member.getId(), product.getId()));
     }
 
     public record Command(MemberInfo memberInfo, Long productId) {
