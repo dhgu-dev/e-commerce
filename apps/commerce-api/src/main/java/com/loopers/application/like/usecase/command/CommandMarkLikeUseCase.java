@@ -1,6 +1,8 @@
 package com.loopers.application.like.usecase.command;
 
 import com.loopers.application.member.MemberInfo;
+import com.loopers.domain.brand.BrandEvent;
+import com.loopers.domain.brand.BrandEventPublisher;
 import com.loopers.domain.like.LikeEvent;
 import com.loopers.domain.like.LikeEventPublisher;
 import com.loopers.domain.like.LikeService;
@@ -15,6 +17,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class CommandMarkLikeUseCase {
@@ -23,6 +27,7 @@ public class CommandMarkLikeUseCase {
     private final ProductService productService;
     private final LikeService likeService;
     private final LikeEventPublisher likeEventPublisher;
+    private final BrandEventPublisher brandEventPublisher;
 
     @Transactional
     public void execute(Command command) {
@@ -39,6 +44,7 @@ public class CommandMarkLikeUseCase {
         }
 
         likeEventPublisher.publish(new LikeEvent.LikeMarkedEvent(member.getId(), product.getId()));
+        brandEventPublisher.publish(new BrandEvent.BrandProductLikedEvent(product.getId(), product.getBrandId(), member.getId(), LocalDateTime.now()));
     }
 
     public record Command(MemberInfo memberInfo, Long productId) {
