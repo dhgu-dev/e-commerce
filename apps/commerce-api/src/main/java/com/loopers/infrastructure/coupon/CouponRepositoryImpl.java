@@ -23,5 +23,10 @@ public class CouponRepositoryImpl implements CouponRepository, OrderCouponManage
     public void saveAndFlush(CouponModel couponModel) {
         couponJpaRepository.saveAndFlush(couponModel);
     }
-    
+
+    @Override
+    public void save(CouponModel couponModel) {
+        couponJpaRepository.save(couponModel);
+    }
+
 }
