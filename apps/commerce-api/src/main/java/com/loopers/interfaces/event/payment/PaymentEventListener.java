@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -26,6 +28,7 @@ public class PaymentEventListener {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleOrder(PaymentEvent.PaymentCompletedEvent event) {
         OrdersModel order = orderRepository.find(Long.valueOf(event.orderId()))
             .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "Order not found for ID: " + event.orderId()));
@@ -44,6 +47,7 @@ public class PaymentEventListener {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleOrder(PaymentEvent.PaymentFailedEvent event) {
         OrdersModel order = orderRepository.find(Long.valueOf(event.orderId()))
             .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "Order not found for ID: " + event.orderId()));

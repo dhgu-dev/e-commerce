@@ -6,6 +6,8 @@ import com.loopers.domain.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -18,6 +20,7 @@ public class LikeEventListener {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(LikeEvent.LikeMarkedEvent event) {
         var product = productService.getDetail(event.productId());
         productService.updateProductLikeCount(product, likeService.getLikeCount(product));
@@ -25,6 +28,7 @@ public class LikeEventListener {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(LikeEvent.LikeUnmarkedEvent event) {
         var product = productService.getDetail(event.productId());
         productService.updateProductLikeCount(product, likeService.getLikeCount(product));

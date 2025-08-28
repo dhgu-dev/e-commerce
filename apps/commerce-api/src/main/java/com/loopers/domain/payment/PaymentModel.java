@@ -7,12 +7,14 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "payment")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ToString(callSuper = true)
 public class PaymentModel extends BaseEntity {
     @Column(name = "transaction_key", nullable = false, unique = true)
     @Getter
