@@ -7,8 +7,10 @@ import com.loopers.domain.coupon.CouponModel;
 import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberRepository;
-import com.loopers.domain.member.MemberService;
-import com.loopers.domain.orders.*;
+import com.loopers.domain.orders.OrderEvent;
+import com.loopers.domain.orders.OrderEventPublisher;
+import com.loopers.domain.orders.OrderService;
+import com.loopers.domain.orders.OrdersModel;
 import com.loopers.domain.orders.vo.Price;
 import com.loopers.domain.product.ProductModel;
 import com.loopers.domain.product.ProductRepository;
@@ -28,10 +30,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CommandOrderUseCase {
 
-    private final MemberService memberService;
     private final ProductService productService;
     private final OrderService orderService;
-    private final DataPlatformServiceOutputPort deliveryClient;
     private final ProductRepository productRepository;
     private final CouponRepository couponRepository;
     private final MemberRepository memberRepository;

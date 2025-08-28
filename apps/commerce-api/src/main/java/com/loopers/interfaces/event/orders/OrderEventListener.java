@@ -22,7 +22,7 @@ public class OrderEventListener {
     private final OrderRepository orderRepository;
 
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleCoupon(OrderEvent.OrderCreatedEvent event) {
         if (event.couponId() == null) {
             return;
@@ -30,7 +30,7 @@ public class OrderEventListener {
 
         CouponModel coupon = couponRepository.find(event.couponId()).orElseThrow();
         coupon.consume();
-        couponRepository.saveAndFlush(coupon);
+        couponRepository.save(coupon);
     }
 
     @Async
