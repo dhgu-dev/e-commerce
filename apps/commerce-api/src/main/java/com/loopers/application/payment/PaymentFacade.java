@@ -27,6 +27,7 @@ public class PaymentFacade {
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
     private final OrderResourceManager orderResourceManager;
+    private final PaymentEventPublisher paymentEventPublisher;
 
     public PaymentOrderResult requestPayment(PaymentOrder request) {
         MemberModel member = memberRepository.findByUserId(request.userId()).orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND));
@@ -79,13 +80,27 @@ public class PaymentFacade {
             case SUCCESS -> {
                 payment.approve();
                 paymentRepository.save(payment);
-                order.process();
-                orderRepository.save(order);
+                paymentEventPublisher.publish(
+                    new PaymentEvent.PaymentCompletedEvent(
+                        payment.getId(),
+                        order.getId().toString(),
+                        payment.getTransactionKey(),
+                        payment.getAmount().longValue()
+                    )
+                );
             }
             case FAILED -> {
                 payment.failed(detail.reason());
                 paymentRepository.save(payment);
-                orderResourceManager.restoreResources(order);
+                paymentEventPublisher.publish(
+                    new PaymentEvent.PaymentFailedEvent(
+                        payment.getId(),
+                        order.getId().toString(),
+                        payment.getTransactionKey(),
+                        payment.getAmount().longValue(),
+                        detail.reason()
+                    )
+                );
             }
         }
     }

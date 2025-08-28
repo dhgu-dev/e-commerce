@@ -1,5 +1,8 @@
 package com.loopers.infrastructure.pg;
 
+import lombok.ToString;
+
+@ToString
 public class PgApiResponse<T> {
     private final Metadata meta;
     private final T data;

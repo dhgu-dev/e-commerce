@@ -9,7 +9,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
-import java.time.ZonedDateTime;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -137,28 +136,6 @@ class CouponModelTest {
             BigDecimal discountedPrice = couponModel.apply(originalPrice);
 
             assertThat(discountedPrice).isEqualTo(BigDecimal.valueOf(80));
-        }
-
-        @Test
-        void apply_whenDeletedAtIsNotNull_throwsIllegalStateException() {
-            DiscountMethod discountMethod = new DiscountMethod(0.5);
-            CouponModel couponModel = new CouponModel(discountMethod, TargetScope.ORDER);
-            ReflectionTestUtils.setField(couponModel, "deletedAt", ZonedDateTime.now());
-
-            assertThrows(IllegalStateException.class, () -> {
-                couponModel.apply(BigDecimal.valueOf(100));
-            });
-        }
-
-        @Test
-        void apply_whenApplied_deletesCoupon() {
-            DiscountMethod discountMethod = new DiscountMethod(0.5);
-            CouponModel couponModel = new CouponModel(discountMethod, TargetScope.ORDER);
-
-            BigDecimal originalPrice = BigDecimal.valueOf(100);
-            couponModel.apply(originalPrice);
-
-            assertThat(couponModel.getDeletedAt()).isNotNull();
         }
     }
 

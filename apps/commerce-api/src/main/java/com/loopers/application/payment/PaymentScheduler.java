@@ -1,7 +1,6 @@
 package com.loopers.application.payment;
 
 import com.loopers.domain.orders.OrderRepository;
-import com.loopers.domain.orders.OrderResourceManager;
 import com.loopers.domain.orders.OrdersModel;
 import com.loopers.domain.payment.*;
 import com.loopers.support.error.CoreException;
@@ -22,8 +21,8 @@ public class PaymentScheduler {
 
     private final PaymentRepository paymentRepository;
     private final PgProvider<CardPaymentRequest> pgProvider;
-    private final OrderResourceManager orderResourceManager;
     private final OrderRepository orderRepository;
+    private final PaymentEventPublisher paymentEventPublisher;
 
     @Scheduled(fixedRate = 600000) // 10분마다 실행
     public void checkPendingPayments() {
@@ -43,13 +42,27 @@ public class PaymentScheduler {
                 case SUCCESS -> {
                     payment.approve();
                     paymentRepository.save(payment);
-                    order.process();
-                    orderRepository.save(order);
+                    paymentEventPublisher.publish(
+                        new PaymentEvent.PaymentCompletedEvent(
+                            payment.getId(),
+                            order.getId().toString(),
+                            payment.getTransactionKey(),
+                            payment.getAmount().longValue()
+                        )
+                    );
                 }
                 case FAILED -> {
                     payment.failed(detail.reason());
                     paymentRepository.save(payment);
-                    orderResourceManager.restoreResources(order);
+                    paymentEventPublisher.publish(
+                        new PaymentEvent.PaymentFailedEvent(
+                            payment.getId(),
+                            order.getId().toString(),
+                            payment.getTransactionKey(),
+                            payment.getAmount().longValue(),
+                            detail.reason()
+                        )
+                    );
                 }
             }
         }

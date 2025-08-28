@@ -7,7 +7,6 @@ import com.loopers.domain.coupon.CouponModel;
 import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberRepository;
-import com.loopers.domain.orders.ExternalServiceOutputPort;
 import com.loopers.domain.orders.OrderRepository;
 import com.loopers.domain.orders.OrdersModel;
 import com.loopers.domain.product.ProductModel;
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
@@ -47,9 +45,6 @@ class CommandOrderUseCaseTest {
 
     @Autowired
     private CouponRepository couponRepository;
-
-    @MockitoBean
-    private ExternalServiceOutputPort deliveryClient;
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
