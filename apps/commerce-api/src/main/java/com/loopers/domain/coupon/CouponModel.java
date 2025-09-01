@@ -81,14 +81,21 @@ public class CouponModel {
         this.issuedAt = ZonedDateTime.now();
     }
 
+    public Boolean isUsed() {
+        return this.deletedAt != null;
+    }
+
+    public void consume() {
+        if (this.isUsed()) {
+            throw new IllegalStateException("이미 사용된 쿠폰입니다.");
+        }
+        delete();
+    }
+
     public BigDecimal apply(BigDecimal originalPrice) {
         if (this.discountMethod == null) {
             throw new IllegalStateException("할인 규칙이 설정되지 않았습니다.");
         }
-        if (this.deletedAt != null) {
-            throw new IllegalStateException("사용된 쿠폰입니다. 사용할 수 없습니다.");
-        }
-        delete();
         return this.discountMethod.toPolicy().applyDiscount(originalPrice);
     }
 

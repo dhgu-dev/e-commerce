@@ -6,4 +6,6 @@ public interface CouponRepository {
     Optional<CouponModel> find(Long id);
 
     void saveAndFlush(CouponModel couponModel);
+
+    void save(CouponModel couponModel);
 }

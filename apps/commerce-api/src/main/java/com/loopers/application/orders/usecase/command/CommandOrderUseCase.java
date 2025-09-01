@@ -7,14 +7,11 @@ import com.loopers.domain.coupon.CouponModel;
 import com.loopers.domain.coupon.CouponRepository;
 import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberRepository;
-import com.loopers.domain.member.MemberService;
-import com.loopers.domain.orders.ExternalServiceOutputPort;
-import com.loopers.domain.orders.OrderRepository;
+import com.loopers.domain.orders.OrderEvent;
+import com.loopers.domain.orders.OrderEventPublisher;
 import com.loopers.domain.orders.OrderService;
 import com.loopers.domain.orders.OrdersModel;
 import com.loopers.domain.orders.vo.Price;
-import com.loopers.domain.payment.CardPaymentRequest;
-import com.loopers.domain.payment.PaymentProcessor;
 import com.loopers.domain.product.ProductModel;
 import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductService;
@@ -33,15 +30,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CommandOrderUseCase {
 
-    private final MemberService memberService;
     private final ProductService productService;
     private final OrderService orderService;
-    private final ExternalServiceOutputPort deliveryClient;
     private final ProductRepository productRepository;
     private final CouponRepository couponRepository;
     private final MemberRepository memberRepository;
-    private final OrderRepository orderRepository;
-    private final PaymentProcessor<CardPaymentRequest> cardPaymentProcessor;
+    private final OrderEventPublisher orderEventPublisher;
 
     @Transactional()
     public Result execute(Command command) {
@@ -55,7 +49,7 @@ public class CommandOrderUseCase {
             if (coupon == null) {
                 throw new CoreException(ErrorType.NOT_FOUND, "Coupon not found with ID: " + command.couponId());
             }
-            if (coupon.getDeletedAt() != null) {
+            if (coupon.isUsed()) {
                 throw new CoreException(ErrorType.BAD_REQUEST, "사용할 수 없는 쿠폰입니다.");
             }
             if (coupon.getIssuedAt() == null || !coupon.hasOwned(member.getId())) {
@@ -82,7 +76,7 @@ public class CommandOrderUseCase {
         // 쿠폰 사용
         if (coupon != null) {
             totalPrice = coupon.apply(totalPrice);
-            couponRepository.saveAndFlush(coupon);
+
         }
 
         // 재고 차감
@@ -95,6 +89,13 @@ public class CommandOrderUseCase {
 
         // 주문 정보 생성
         OrdersModel order = orderService.order(member, items, coupon != null ? coupon.getId() : null, Price.of(totalPrice));
+
+        orderEventPublisher.publish(new OrderEvent.OrderCreatedEvent(
+            order.getId(),
+            order.getMemberId(),
+            order.getItems().stream().map(item -> item.getProductSnapshot().getProductId()).toList(),
+            order.getCouponId()
+        ));
 
         return new Result(OrderInfo.from(order));
     }
