@@ -3,6 +3,8 @@ package com.loopers.application.product.usecase.query;
 import com.loopers.application.product.dto.ProductInfo;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.common.CacheManager;
+import com.loopers.domain.product.ProductEvent;
+import com.loopers.domain.product.ProductEventPublisher;
 import com.loopers.domain.product.ProductService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
@@ -11,7 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -22,12 +26,15 @@ public class QueryProductDetailUseCase {
     private final ProductService productService;
     private final BrandService brandService;
     private final CacheManager<ProductInfo> cacheManager;
+    private final ProductEventPublisher productEventPublisher;
 
     @Transactional(readOnly = true)
     public Result execute(Query query) {
         if (query == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "Query cannot be null");
         }
+
+        productEventPublisher.publish(new ProductEvent.ProductDetailViewedEvent(UUID.randomUUID().toString(), query.productId(), ZonedDateTime.now(), "ProductDetailViewedEvent"));
 
         try {
             Optional<ProductInfo> cached = cacheManager.find("product:detail:" + query.productId(), ProductInfo.class);

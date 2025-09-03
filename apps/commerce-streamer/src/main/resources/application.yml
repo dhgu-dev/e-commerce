@@ -14,7 +14,7 @@ spring:
   main:
     web-application-type: servlet
   application:
-    name: commerce-api
+    name: commerce-streamer
   profiles:
     active: local
   config:
@@ -35,11 +35,25 @@ spring:
     activate:
       on-profile: local, test
 
+server:
+  port: 8084
+
+management:
+  server:
+    port: 8085
+
 ---
 spring:
   config:
     activate:
       on-profile: dev
+
+server:
+  port: 8084
+
+management:
+  server:
+    port: 8085
 
 ---
 spring:

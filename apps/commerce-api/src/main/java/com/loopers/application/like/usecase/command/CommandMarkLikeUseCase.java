@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class CommandMarkLikeUseCase {
         }
 
         likeEventPublisher.publish(new LikeEvent.LikeMarkedEvent(member.getId(), product.getId()));
+        likeEventPublisher.publish(new LikeEvent.LikeChangedEvent(UUID.randomUUID().toString(), member.getId(), product.getId(), ZonedDateTime.now(), "LikeChangedEvent"));
         brandEventPublisher.publish(new BrandEvent.BrandProductLikedEvent(product.getId(), product.getBrandId(), member.getId(), LocalDateTime.now()));
     }
 

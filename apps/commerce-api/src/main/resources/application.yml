@@ -21,8 +21,15 @@ spring:
     import:
       - jpa.yml
       - redis.yml
+      - kafka.yml
       - logging.yml
       - monitoring.yml
+  kafka:
+    producer:
+      acks: all
+      retries: 2
+      properties:
+        enable.idempotence: true
 
 springdoc:
   use-fqn: true
@@ -68,11 +75,17 @@ spring:
     activate:
       on-profile: local, test
 
+server:
+  port: 8080
+
 ---
 spring:
   config:
     activate:
       on-profile: dev
+
+server:
+  port: 8080
 
 ---
 spring:

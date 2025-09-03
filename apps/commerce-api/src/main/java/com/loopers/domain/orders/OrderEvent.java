@@ -1,5 +1,6 @@
 package com.loopers.domain.orders;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 public class OrderEvent {
@@ -11,5 +12,16 @@ public class OrderEvent {
     }
 
     public record OrderCanceledEvent(Long orderId, Long memberId, List<Long> productIds, Long couponId) {
+    }
+
+    public record ProductSoldEvent(
+        String eventId,
+        Long orderId,
+        Long productId,
+        Long quantity,
+        ZonedDateTime updatedAt,
+        String eventName,
+        Long memberId
+    ) {
     }
 }
