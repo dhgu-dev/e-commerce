@@ -5,8 +5,9 @@ import com.loopers.application.payment.dto.PaymentOrderResult;
 import com.loopers.application.payment.dto.SyncPaymentCommand;
 import com.loopers.domain.member.MemberModel;
 import com.loopers.domain.member.MemberRepository;
+import com.loopers.domain.orders.OrderEvent;
+import com.loopers.domain.orders.OrderEventPublisher;
 import com.loopers.domain.orders.OrderRepository;
-import com.loopers.domain.orders.OrderResourceManager;
 import com.loopers.domain.orders.OrdersModel;
 import com.loopers.domain.payment.*;
 import com.loopers.support.error.CoreException;
@@ -15,6 +16,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.ZonedDateTime;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -26,8 +30,8 @@ public class PaymentFacade {
     private final MemberRepository memberRepository;
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
-    private final OrderResourceManager orderResourceManager;
     private final PaymentEventPublisher paymentEventPublisher;
+    private final OrderEventPublisher orderEventPublisher;
 
     public PaymentOrderResult requestPayment(PaymentOrder request) {
         MemberModel member = memberRepository.findByUserId(request.userId()).orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND));
@@ -42,6 +46,17 @@ public class PaymentFacade {
                 if (paymentModel.getStatus() == TransactionStatus.SUCCESS) {
                     order.process();
                     orderRepository.save(order);
+                    for (var item : order.getItems()) {
+                        orderEventPublisher.pusblish(new OrderEvent.ProductSoldEvent(
+                            UUID.randomUUID().toString(),
+                            order.getId(),
+                            item.getProductSnapshot().getProductId(),
+                            item.getQuantity(),
+                            ZonedDateTime.now(),
+                            "ProductSoldEvent",
+                            member.getId()
+                        ));
+                    }
                 }
                 return new PaymentOrderResult(paymentModel.getTransactionKey());
             }

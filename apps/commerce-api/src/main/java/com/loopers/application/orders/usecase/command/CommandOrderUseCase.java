@@ -12,9 +12,7 @@ import com.loopers.domain.orders.OrderEventPublisher;
 import com.loopers.domain.orders.OrderService;
 import com.loopers.domain.orders.OrdersModel;
 import com.loopers.domain.orders.vo.Price;
-import com.loopers.domain.product.ProductModel;
-import com.loopers.domain.product.ProductRepository;
-import com.loopers.domain.product.ProductService;
+import com.loopers.domain.product.*;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +36,7 @@ public class CommandOrderUseCase {
     private final CouponRepository couponRepository;
     private final MemberRepository memberRepository;
     private final OrderEventPublisher orderEventPublisher;
+    private final ProductEventPublisher productEventPublisher;
 
     @Transactional()
     public Result execute(Command command) {
@@ -96,6 +97,20 @@ public class CommandOrderUseCase {
             order.getItems().stream().map(item -> item.getProductSnapshot().getProductId()).toList(),
             order.getCouponId()
         ));
+
+        for (var item : order.getItems()) {
+            ProductModel product = productRepository.findWithLock(item.getProductSnapshot().getProductId()).orElseThrow(
+                () -> new CoreException(ErrorType.NOT_FOUND, "Product not found with ID: " + item.getProductSnapshot().getProductId())
+            );
+            productEventPublisher.publish(new ProductEvent.StockAdjustedEvent(
+                UUID.randomUUID().toString(),
+                item.getProductSnapshot().getProductId(),
+                product.getStock().getQuantity(),
+                ZonedDateTime.now(),
+                "StockAdjustedEvent",
+                member.getId()
+            ));
+        }
 
         return new Result(OrderInfo.from(order));
     }
