@@ -6,4 +6,6 @@ public interface OrderEventPublisher {
     void publish(OrderEvent.OrderProcessedEvent event);
 
     void publish(OrderEvent.OrderCanceledEvent event);
+
+    void pusblish(OrderEvent.ProductSoldEvent event);
 }

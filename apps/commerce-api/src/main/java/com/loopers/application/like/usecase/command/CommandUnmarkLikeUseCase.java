@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +42,7 @@ public class CommandUnmarkLikeUseCase {
         likeService.unlike(member, product);
 
         likeEventPublisher.publish(new LikeEvent.LikeUnmarkedEvent(member.getId(), product.getId()));
+        likeEventPublisher.publish(new LikeEvent.LikeChangedEvent(UUID.randomUUID().toString(), member.getId(), product.getId(), ZonedDateTime.now(), "UnLikeEvent"));
         brandEventPublisher.publish(new BrandEvent.BrandProductUnLikedEvent(product.getId(), product.getBrandId(), member.getId(), LocalDateTime.now()));
     }
 
