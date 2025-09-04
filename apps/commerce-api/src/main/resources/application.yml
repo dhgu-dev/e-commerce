@@ -27,7 +27,6 @@ spring:
   kafka:
     producer:
       acks: all
-      retries: 2
       properties:
         enable.idempotence: true
 

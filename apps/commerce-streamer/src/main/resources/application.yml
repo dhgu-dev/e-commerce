@@ -25,9 +25,11 @@ spring:
       - logging.yml
       - monitoring.yml
 
-demo-kafka:
-  test:
-    topic-name: demo.internal.topic-v1
+kafka-topics:
+  catalog-events:
+    topic-name: catalog-events
+  order-events:
+    topic-name: order-events
 
 ---
 spring:

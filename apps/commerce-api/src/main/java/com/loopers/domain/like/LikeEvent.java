@@ -9,6 +9,6 @@ public class LikeEvent {
     public record LikeUnmarkedEvent(Long memberId, Long productId) {
     }
 
-    public record LikeChangedEvent(String eventId, Long memberId, Long productId, ZonedDateTime updatedAt, String eventName) {
+    public record LikeChangedEvent(String eventId, Long memberId, Long productId, ZonedDateTime createdAt, String eventName) {
     }
 }

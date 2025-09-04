@@ -42,7 +42,7 @@ public class CommandUnmarkLikeUseCase {
         likeService.unlike(member, product);
 
         likeEventPublisher.publish(new LikeEvent.LikeUnmarkedEvent(member.getId(), product.getId()));
-        likeEventPublisher.publish(new LikeEvent.LikeChangedEvent(UUID.randomUUID().toString(), member.getId(), product.getId(), ZonedDateTime.now(), "LikeChangedEvent"));
+        likeEventPublisher.publish(new LikeEvent.LikeChangedEvent(UUID.randomUUID().toString(), member.getId(), product.getId(), ZonedDateTime.now(), "UnLikeEvent"));
         brandEventPublisher.publish(new BrandEvent.BrandProductUnLikedEvent(product.getId(), product.getBrandId(), member.getId(), LocalDateTime.now()));
     }
 

@@ -19,7 +19,7 @@ public class OrderEvent {
         Long orderId,
         Long productId,
         Long quantity,
-        ZonedDateTime updatedAt,
+        ZonedDateTime createdAt,
         String eventName,
         Long memberId
     ) {

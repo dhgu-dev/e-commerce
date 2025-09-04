@@ -46,7 +46,7 @@ public class CommandMarkLikeUseCase {
         }
 
         likeEventPublisher.publish(new LikeEvent.LikeMarkedEvent(member.getId(), product.getId()));
-        likeEventPublisher.publish(new LikeEvent.LikeChangedEvent(UUID.randomUUID().toString(), member.getId(), product.getId(), ZonedDateTime.now(), "LikeChangedEvent"));
+        likeEventPublisher.publish(new LikeEvent.LikeChangedEvent(UUID.randomUUID().toString(), member.getId(), product.getId(), ZonedDateTime.now(), "LikeEvent"));
         brandEventPublisher.publish(new BrandEvent.BrandProductLikedEvent(product.getId(), product.getBrandId(), member.getId(), LocalDateTime.now()));
     }
 
